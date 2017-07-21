@@ -37,7 +37,7 @@ HTTP_SPEAKER.prototype = {
             .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
 
         this.log("creating speaker!");
-        var speakerService = new Service.Speaker(this.name);#
+        var speakerService = new Service.Speaker(this.name);
 
         speakerService
             .addCharacteristic(new Characteristic.On())
