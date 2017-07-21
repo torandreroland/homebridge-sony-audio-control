@@ -47,7 +47,7 @@ HTTP_SPEAKER.prototype = {
         speakerService
             .addCharacteristic(new Characteristic.Volume())
             .on("get", this.getVolume.bind(this))
-            .on("set", this.getVolume.bind(this));
+            .on("set", this.setVolume.bind(this));
 
         return [speakerService];
     },
