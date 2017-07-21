@@ -48,6 +48,8 @@ HTTP_SPEAKER.prototype = {
             .addCharacteristic(new Characteristic.Volume())
             .on("get", this.getVolume.bind(this))
             .on("set", this.getVolume.bind(this));
+
+        return [speakerService];
     },
 
     getMuteState: function (callback) {
