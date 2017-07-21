@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.npmignore
+.jshintrc
+.idea
+**/*.iml
