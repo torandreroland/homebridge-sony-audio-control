@@ -27,7 +27,7 @@ HTTP_SPEAKER.prototype = {
         callback();
     },
 
-    getService: function () {
+    getServices: function () {
         var informationService = new Service.AccessoryInformation();
 
         informationService
