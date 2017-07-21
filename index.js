@@ -12,6 +12,7 @@ function HTTP_SPEAKER(log, config) {
 
     this.name = config.name;
 
+    this.on = true;
     this.muted = false;
     this.volume = 100;
 
@@ -36,7 +37,12 @@ HTTP_SPEAKER.prototype = {
             .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
 
         this.log("creating speaker!");
-        var speakerService = new Service.Speaker(this.name);
+        var speakerService = new Service.Speaker(this.name);#
+
+        speakerService
+            .addCharacteristic(new Characteristic.On())
+            .on("get", this.getOnState.bind(this))
+            .on("set", this.setOnState.bind(this));
 
         speakerService
             .getCharacteristic(Characteristic.Mute)
@@ -60,6 +66,17 @@ HTTP_SPEAKER.prototype = {
     setMuteState: function (state, callback) {
         this.muted = state;
         this.log("setting mute to %s", state? "MUTED": "NOT MUTED");
+        callback();
+    },
+
+    getOnState: function (callback) {
+        this.log("getting power state");
+        callback(null, this.on);
+    },
+
+    setOnState: function (state, callback) {
+        this.on = state;
+        this.log("setting power to %s", state? "ON": "OFF");
         callback();
     },
 
