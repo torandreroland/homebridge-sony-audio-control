@@ -1,3 +1,5 @@
+"use strict";
+
 var Service, Characteristic;
 var request = require("request");
 
@@ -12,13 +14,27 @@ function HTTP_SPEAKER(log, config) {
 
     this.name = config.name;
 
-    this.on = true;
-    this.muted = false;
-    this.volume = 100;
+    this.volume = {};
+    this.mute = {};
+    this.power = { enabled: false };
 
-    this.http_method = config.http_method || 'GET';
+    this.volume.statusUrl = config.volume.statusUrl;
+    this.volume.setUrl = config.volume.setUrl;
+    this.volume.httpMethod = config.volume.httpMethod || "GET";
 
-    // TODO config stuff
+    this.mute.statusUrl = config.mute.statusUrl;
+    this.mute.onUrl = config.mute.onUrl;
+    this.mute.offUrl = config.mute.offUrl;
+    this.mute.httpMethod = config.mute.httpMethod || "GET";
+
+    if (config.power) { // if power is configured enable it
+        this.power.enabled = true;
+
+        this.power.statusUrl = config.power.statusUrl;
+        this.power.onUrl = config.power.onUrl;
+        this.power.offUrl = config.power.offUrl;
+        this.power.httpMethod = config.power.httpMethod || "GET";
+    }
 }
 
 HTTP_SPEAKER.prototype = {
@@ -32,11 +48,13 @@ HTTP_SPEAKER.prototype = {
         this.log("Creating speaker!");
         var speakerService = new Service.Speaker(this.name);
 
-        this.log("... adding on characteristic");
-        speakerService
-            .addCharacteristic(new Characteristic.On())
-            .on("get", this.getOnState.bind(this))
-            .on("set", this.setOnState.bind(this));
+        if (this.power.enabled) { // since im able to power off/on my speaker i decided to add the option to add the "On" Characteristic
+            this.log("... adding on characteristic");
+            speakerService
+                .addCharacteristic(new Characteristic.On())
+                .on("get", this.getPowerState.bind(this))
+                .on("set", this.setPowerState.bind(this));
+        }
 
         this.log("... configuring mute characteristic");
         speakerService
@@ -54,36 +72,169 @@ HTTP_SPEAKER.prototype = {
     },
 
     getMuteState: function (callback) {
-        this.log("getting mute state");
-        callback(null, this.muted);
+        if (!this.mute.statusUrl) {
+            this.log.warn("Ignoring getMuteState() request, 'mute.statusUrl' is not defined!");
+            callback(new Error("No 'mute.statusUrl' defined!"));
+            return;
+        }
+
+        this._httpRequest(this.mute.statusUrl, "", "GET", function (error, response, body) {
+            if (error) {
+                this.log("getMuteState() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("getMuteState() request returned http error: %s", response.statusCode);
+                callback(new Error("getMuteState() returned http error " + response.statusCode));
+            }
+            else {
+                var muted = parseInt(body) > 0;
+                this.log("Speaker is currently %s", muted? "MUTED": "NOT MUTED");
+                callback(null, muted);
+            }
+        }.bind(this));
     },
 
-    setMuteState: function (state, callback) {
-        this.muted = state;
-        this.log("setting mute to %s", state? "MUTED": "NOT MUTED");
-        callback();
+    setMuteState: function (muted, callback) {
+        if (!this.mute.onUrl || !this.mute.offUrl) {
+            this.log.warn("Ignoring setMuteState() request, 'mute.onUrl' or 'mute.offUrl' is not defined!");
+            callback(new Error("No 'mute.onUrl' or 'mute.offUrl' defined!"));
+            return;
+        }
+
+        var url = muted? this.mute.onUrl: this.mute.offUrl;
+
+        this._httpRequest(url, "", this.mute.httpMethod, function (error, response, body) {
+            if (error) {
+                this.log("setMuteState() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("setMuteState() request returned http error: %s", response.statusCode);
+                callback(new Error("setMuteState() returned http error " + response.statusCode));
+            }
+            else {
+                this.log("setMuteState() successfully set mute state to %s", muted? "ON": "OFF");
+
+                callback(undefined, body);
+            }
+        }.bind(this));
     },
 
-    getOnState: function (callback) {
-        this.log("getting power state");
-        callback(null, this.on);
+    getPowerState: function (callback) {
+        if (!this.power.statusUrl) {
+            this.log.warn("Ignoring getPowerState() request, 'power.statusUrl' is not defined!");
+            callback(new Error("No 'power.statusUrl' defined!"));
+            return;
+        }
+
+        this._httpRequest(this.power.statusUrl, "", "GET", function (error, response, body) {
+            if (error) {
+                this.log("getPowerState() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("getPowerState() request returned http error: %s", response.statusCode);
+                callback(new Error("getPowerState() returned http error " + response.statusCode));
+            }
+            else {
+                var powered = parseInt(body) > 0;
+                this.log("Speaker is currently %s", powered? "OM": "OFF");
+
+                callback(null, powered);
+            }
+        }.bind(this));
     },
 
-    setOnState: function (state, callback) {
-        this.on = state;
-        this.log("setting power to %s", state? "ON": "OFF");
-        callback();
+    setPowerState: function (power, callback) {
+        if (!this.power.onUrl || !this.power.offUrl) {
+            this.log.warn("Ignoring setPowerState() request, 'power.onUrl' or 'power.offUrl' is not defined!");
+            callback(new Error("No 'power.onUrl' or 'power.offUrl' defined!"));
+            return;
+        }
+
+        var url = power? this.power.onUrl: this.power.offUrl;
+
+        this._httpRequest(url, "", this.power.httpMethod, function (error, response, body) {
+            if (error) {
+                this.log("setPowerState() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("setPowerState() request returned http error: %s", response.statusCode);
+                callback(new Error("setPowerState() returned http error " + response.statusCode));
+            }
+            else {
+                this.log("setPowerState() successfully set power state to %s", power? "ON": "OFF");
+
+                callback(undefined, body);
+            }
+        }.bind(this));
     },
 
     getVolume: function (callback) {
-        this.log("getting volume");
-        callback(null, this.volume);
+        if (!this.volume.statusUrl) {
+            this.log.warn("Ignoring getVolume() request, 'volume.statusUrl' is not defined!");
+            callback(new Error("No 'volume.statusUrl' defined!"));
+            return;
+        }
+
+        this._httpRequest(this.volume.statusUrl, "", "GET", function (error, response, body) {
+            if (error) {
+                this.log("getVolume() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("getVolume() request returned http error: %s", response.statusCode);
+                callback(new Error("getVolume() returned http error " + response.statusCode));
+            }
+            else {
+                var volume = parseInt(body);
+                this.log("Speaker's volume is at  %s %", volume);
+
+                callback(null, volume);
+            }
+        }.bind(this));
     },
 
     setVolume: function (volume, callback) {
-        this.volume = volume;
-        this.log("setting volume to %s", volume);
-        callback();
+        if (!this.volume.setUrl) {
+            this.log.warn("Ignoring setVolume() request, 'volume.setUrl' is not defined!");
+            callback(new Error("No 'volume.setUrl' defined!"));
+            return;
+        }
+
+        var url = this.volume.setUrl.replace("%s", volume);
+
+        this._httpRequest(url, "", this.volume.httpMethod, function (error, response, body) {
+            if (error) {
+                this.log("setVolume() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("setVolume() request returned http error: %s", response.statusCode);
+                callback(new Error("setVolume() returned http error " + response.statusCode));
+            }
+            else {
+                this.log("setVolume() successfully set volume to %s", volume);
+
+                callback(undefined, body);
+            }
+        }.bind(this));
+    },
+
+    _httpRequest: function (url, body, method, callback) {
+        request(
+            {
+                url: url,
+                body: body,
+                method: method,
+                rejectUnauthorized: false
+            },
+            function (error, response, body) {
+                callback(error, response, body);
+            }
+        )
     }
 
 };
