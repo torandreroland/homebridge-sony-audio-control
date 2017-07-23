@@ -4,3 +4,4 @@ node_modules/
 .jshintrc
 .idea
 **/*.iml
+.DS_Store

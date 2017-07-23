@@ -29,27 +29,22 @@ HTTP_SPEAKER.prototype = {
     },
 
     getServices: function () {
-        var informationService = new Service.AccessoryInformation();
-
-        informationService
-            .setCharacteristic(Characteristic.Manufacturer, "Andi")
-            .setCharacteristic(Characteristic.Model, "homebridge-http-speaker")
-            .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
-
-        this.log("creating speaker!");
+        this.log("Creating speaker!");
         var speakerService = new Service.Speaker(this.name);
 
+        this.log("... adding on characteristic");
         speakerService
             .addCharacteristic(new Characteristic.On())
             .on("get", this.getOnState.bind(this))
             .on("set", this.setOnState.bind(this));
 
+        this.log("... configuring mute characteristic");
         speakerService
             .getCharacteristic(Characteristic.Mute)
             .on("get", this.getMuteState.bind(this))
             .on("set", this.setMuteState.bind(this));
 
-        this.log("... adding volume");
+        this.log("... adding volume characteristic");
         speakerService
             .addCharacteristic(new Characteristic.Volume())
             .on("get", this.getVolume.bind(this))
