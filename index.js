@@ -7,7 +7,7 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
     homebridge.registerAccessory("homebridge-http-speaker", "HTTP-SPEAKER", HTTP_SPEAKER);
-};
+}
 
 function HTTP_SPEAKER(log, config) {
     this.log = log;
