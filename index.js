@@ -7,7 +7,7 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
     homebridge.registerAccessory("homebridge-http-speaker", "HTTP-SPEAKER", HTTP_SPEAKER);
-}
+};
 
 function HTTP_SPEAKER(log, config) {
     this.log = log;
@@ -19,27 +19,27 @@ function HTTP_SPEAKER(log, config) {
     this.power = { enabled: false };
 
     this.volume.statusUrl = config.volume.statusUrl;
-    this.volume.statusBody = "{"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.volume.statusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.setUrl = config.volume.setUrl;
-    this.volume.setBody = "{"method":"setAudioVolume","id":127,"params":[{"volume":"%s","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.volume.setBody = JSON.stringify({"method":"setAudioVolume","id":127,"params":[{"volume":"%s","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.httpMethod = config.volume.httpMethod || "POST";
 
     this.mute.statusUrl = config.mute.statusUrl;
-    this.mute.statusBody = "{"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.mute.statusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.mute.onUrl = config.mute.onUrl;
-    this.mute.onBody = "{"method":"setAudioMute","id":127,"params":[{"mute":"on","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.mute.onBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"on","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.mute.offUrl = config.mute.offUrl;
-    this.mute.offBody = "{"method":"setAudioMute","id":127,"params":[{"mute":"off","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.mute.offBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"off","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.mute.httpMethod = config.mute.httpMethod || "POST";
 
     if (config.power) { // if power is configured enable it
         this.power.enabled = true;
         this.power.statusUrl = config.power.statusUrl;
-        this.power.statusBody = "{"method":"getPowerStatus","id":127,"params":[],"version":"1.1"}";
+        this.power.statusBody = JSON.stringify({"method":"getPowerStatus","id":127,"params":[],"version":"1.1"});
         this.power.onUrl = config.power.onUrl;
-        this.power.onBody = "{"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"}";
+        this.power.onBody = JSON.stringify({"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"});
         this.power.offUrl = config.power.offUrl;
-        this.power.offBody = "{"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"}";
+        this.power.offBody = JSON.stringify({"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"});
         this.power.httpMethod = config.power.httpMethod || "POST";
     }
 }
@@ -95,9 +95,10 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getMuteState() returned http error " + response.statusCode));
             }
             else {
+                body = body.replace("[[", "[");
+                body = body.replace("]]", "]");
                 var responseBody = JSON.parse(body);
-                var responseBodyResult = responseBody.result[0];
-                var muted = responseBodyResult.mute == "on";
+                var muted = responseBody.result[0].mute == "on";
                 this.log("Speaker is currently %s", muted? "MUTED": "NOT MUTED");
                 callback(null, muted);
             }
@@ -202,9 +203,10 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getVolume() returned http error " + response.statusCode));
             }
             else {
+                body = body.replace("[[", "[");
+                body = body.replace("]]", "]");
                 var responseBody = JSON.parse(body);
-                var responseBodyResult = responseBody.result[0];
-                var volume = responseBodyResult.volume;j
+                var volume = responseBody.result[0].volume;
                 this.log("Speaker's volume is at  %s %", volume);
 
                 callback(null, volume);
