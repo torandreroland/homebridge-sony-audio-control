@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/Supereg/homebridge-http-speaker.git"
+    "url": "git@github.com/torandreroland/homebridge-http-speaker.git"
   },
   "dependencies": {
     "request": "^2.65.0"

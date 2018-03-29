@@ -19,21 +19,28 @@ function HTTP_SPEAKER(log, config) {
     this.power = { enabled: false };
 
     this.volume.statusUrl = config.volume.statusUrl;
+    this.volume.statusBody = "{"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"}";
     this.volume.setUrl = config.volume.setUrl;
-    this.volume.httpMethod = config.volume.httpMethod || "GET";
+    this.volume.setBody = "{"method":"setAudioVolume","id":127,"params":[{"volume":"%s","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.volume.httpMethod = config.volume.httpMethod || "POST";
 
     this.mute.statusUrl = config.mute.statusUrl;
+    this.mute.statusBody = "{"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"}";
     this.mute.onUrl = config.mute.onUrl;
+    this.mute.onBody = "{"method":"setAudioMute","id":127,"params":[{"mute":"on","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
     this.mute.offUrl = config.mute.offUrl;
-    this.mute.httpMethod = config.mute.httpMethod || "GET";
+    this.mute.offBody = "{"method":"setAudioMute","id":127,"params":[{"mute":"off","output":"extOutput:zone?zone=1"}],"version":"1.1"}";
+    this.mute.httpMethod = config.mute.httpMethod || "POST";
 
     if (config.power) { // if power is configured enable it
         this.power.enabled = true;
-
         this.power.statusUrl = config.power.statusUrl;
+        this.power.statusBody = "{"method":"getPowerStatus","id":127,"params":[],"version":"1.1"}";
         this.power.onUrl = config.power.onUrl;
+        this.power.onBody = "{"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"}";
         this.power.offUrl = config.power.offUrl;
-        this.power.httpMethod = config.power.httpMethod || "GET";
+        this.power.offBody = "{"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"}";
+        this.power.httpMethod = config.power.httpMethod || "POST";
     }
 }
 
@@ -78,7 +85,7 @@ HTTP_SPEAKER.prototype = {
             return;
         }
 
-        this._httpRequest(this.mute.statusUrl, "", "GET", function (error, response, body) {
+        this._httpRequest(this.mute.statusUrl, this.mute.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getMuteState() failed: %s", error.message);
                 callback(error);
@@ -88,7 +95,9 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getMuteState() returned http error " + response.statusCode));
             }
             else {
-                var muted = parseInt(body) > 0;
+                var responseBody = JSON.parse(body);
+                var responseBodyResult = responseBody.result[0];
+                var muted = responseBodyResult.mute == "on";
                 this.log("Speaker is currently %s", muted? "MUTED": "NOT MUTED");
                 callback(null, muted);
             }
@@ -103,8 +112,9 @@ HTTP_SPEAKER.prototype = {
         }
 
         var url = muted? this.mute.onUrl: this.mute.offUrl;
+        var requestbody = muted? this.mute.onBody: this.mute.offBody;
 
-        this._httpRequest(url, "", this.mute.httpMethod, function (error, response, body) {
+        this._httpRequest(url, requestbody, this.mute.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setMuteState() failed: %s", error.message);
                 callback(error);
@@ -128,7 +138,7 @@ HTTP_SPEAKER.prototype = {
             return;
         }
 
-        this._httpRequest(this.power.statusUrl, "", "GET", function (error, response, body) {
+        this._httpRequest(this.power.statusUrl, this.power.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getPowerState() failed: %s", error.message);
                 callback(error);
@@ -138,8 +148,10 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getPowerState() returned http error " + response.statusCode));
             }
             else {
-                var powered = parseInt(body) > 0;
-                this.log("Speaker is currently %s", powered? "OM": "OFF");
+                var responseBody = JSON.parse(body);
+                var responseBodyResult = responseBody.result[0];
+                var powered = responseBodyResult.status == "active";
+                this.log("Speaker is currently %s", powered? "ON": "OFF");
 
                 callback(null, powered);
             }
@@ -154,8 +166,9 @@ HTTP_SPEAKER.prototype = {
         }
 
         var url = power? this.power.onUrl: this.power.offUrl;
+        var requestbody = power? this.power.onBody: this.power.onBody;
 
-        this._httpRequest(url, "", this.power.httpMethod, function (error, response, body) {
+        this._httpRequest(url, requestbody, this.power.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setPowerState() failed: %s", error.message);
                 callback(error);
@@ -179,7 +192,7 @@ HTTP_SPEAKER.prototype = {
             return;
         }
 
-        this._httpRequest(this.volume.statusUrl, "", "GET", function (error, response, body) {
+        this._httpRequest(this.volume.statusUrl, this.volume.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getVolume() failed: %s", error.message);
                 callback(error);
@@ -189,7 +202,9 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getVolume() returned http error " + response.statusCode));
             }
             else {
-                var volume = parseInt(body);
+                var responseBody = JSON.parse(body);
+                var responseBodyResult = responseBody.result[0];
+                var volume = responseBodyResult.volume;j
                 this.log("Speaker's volume is at  %s %", volume);
 
                 callback(null, volume);
@@ -204,9 +219,9 @@ HTTP_SPEAKER.prototype = {
             return;
         }
 
-        var url = this.volume.setUrl.replace("%s", volume);
+        var body = this.volume.setBody.replace("%s", volume);
 
-        this._httpRequest(url, "", this.volume.httpMethod, function (error, response, body) {
+        this._httpRequest(this.volume.setUrl, body, this.volume.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setVolume() failed: %s", error.message);
                 callback(error);
