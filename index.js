@@ -6,10 +6,10 @@ var request = require("request");
 module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
-    homebridge.registerAccessory("homebridge-http-speaker", "HTTP-SPEAKER", HTTP_SPEAKER);
+    homebridge.registerAccessory("homebridge-sony-audio-control", "receiver", SonyAudioControlReceiver);
 };
 
-function HTTP_SPEAKER(log, config) {
+function SonyAudioControlReceiver(log, config) {
     this.log = log;
 
     this.name = config.name;
@@ -18,33 +18,28 @@ function HTTP_SPEAKER(log, config) {
     this.mute = {};
     this.power = { enabled: false };
 
-    this.volume.statusUrl = config.volume.statusUrl;
+    this.volume.url = config.baseUrl + "/sony/audio";
     this.volume.statusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
-    this.volume.setUrl = config.volume.setUrl;
     this.volume.setBody = JSON.stringify({"method":"setAudioVolume","id":127,"params":[{"volume":"%s","output":"extOutput:zone?zone=1"}],"version":"1.1"});
-    this.volume.httpMethod = config.volume.httpMethod || "POST";
+    this.volume.httpMethod = "POST";
 
-    this.mute.statusUrl = config.mute.statusUrl;
+    this.mute.url = config.baseUrl + "/sony/audio";
     this.mute.statusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
-    this.mute.onUrl = config.mute.onUrl;
     this.mute.onBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"on","output":"extOutput:zone?zone=1"}],"version":"1.1"});
-    this.mute.offUrl = config.mute.offUrl;
     this.mute.offBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"off","output":"extOutput:zone?zone=1"}],"version":"1.1"});
-    this.mute.httpMethod = config.mute.httpMethod || "POST";
+    this.mute.httpMethod = "POST";
 
     if (config.power) { // if power is configured enable it
         this.power.enabled = true;
-        this.power.statusUrl = config.power.statusUrl;
+        this.power.url = config.baseUrl + "/sony/avContent";
         this.power.statusBody = JSON.stringify({"method":"getCurrentExternalTerminalsStatus","id":127,"params":[],"version":"1.0"});
-        this.power.onUrl = config.power.onUrl;
         this.power.onBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"active","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
-        this.power.offUrl = config.power.offUrl;
         this.power.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
-        this.power.httpMethod = config.power.httpMethod || "POST";
+        this.power.httpMethod = "POST";
     }
 }
 
-HTTP_SPEAKER.prototype = {
+SonyAudioControlReceiver.prototype = {
 
     identify: function (callback) {
         this.log("Identify requested!");
@@ -53,6 +48,14 @@ HTTP_SPEAKER.prototype = {
 
     getServices: function () {
         this.log("Creating speaker!");
+
+    		const informationService = new Service.AccessoryInformation();
+
+    		informationService
+    		.setCharacteristic(Characteristic.Manufacturer, "Sony")
+    		.setCharacteristic(Characteristic.Model, "STR-DN1080")
+    		.setCharacteristic(Characteristic.SerialNumber, "Serial number 1");
+
         var speakerService = new Service.Speaker(this.name);
 
         if (this.power.enabled) { // since im able to power off/on my speaker i decided to add the option to add the "On" Characteristic
@@ -75,17 +78,17 @@ HTTP_SPEAKER.prototype = {
             .on("get", this.getVolume.bind(this))
             .on("set", this.setVolume.bind(this));
 
-        return [speakerService];
+        return [informationService, speakerService];
     },
 
     getMuteState: function (callback) {
-        if (!this.mute.statusUrl) {
-            this.log.warn("Ignoring getMuteState() request, 'mute.statusUrl' is not defined!");
-            callback(new Error("No 'mute.statusUrl' defined!"));
+        if (!this.mute.url) {
+            this.log.warn("Ignoring getMuteState() request, 'mute.url' is not defined!");
+            callback(new Error("No 'mute.url' defined!"));
             return;
         }
 
-        this._httpRequest(this.mute.statusUrl, this.mute.statusBody, "POST", function (error, response, body) {
+        this._httpRequest(this.mute.url, this.mute.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getMuteState() failed: %s", error.message);
                 callback(error);
@@ -106,16 +109,15 @@ HTTP_SPEAKER.prototype = {
     },
 
     setMuteState: function (muted, callback) {
-        if (!this.mute.onUrl || !this.mute.offUrl) {
-            this.log.warn("Ignoring setMuteState() request, 'mute.onUrl' or 'mute.offUrl' is not defined!");
-            callback(new Error("No 'mute.onUrl' or 'mute.offUrl' defined!"));
+        if (!this.mute.url) {
+            this.log.warn("Ignoring setMuteState() request, 'mute.url' is not defined!");
+            callback(new Error("No 'mute.url' defined!"));
             return;
         }
 
-        var url = muted? this.mute.onUrl: this.mute.offUrl;
         var requestbody = muted? this.mute.onBody: this.mute.offBody;
 
-        this._httpRequest(url, requestbody, this.mute.httpMethod, function (error, response, body) {
+        this._httpRequest(this.mute.url, requestbody, this.mute.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setMuteState() failed: %s", error.message);
                 callback(error);
@@ -133,13 +135,13 @@ HTTP_SPEAKER.prototype = {
     },
 
     getPowerState: function (callback) {
-        if (!this.power.statusUrl) {
-            this.log.warn("Ignoring getPowerState() request, 'power.statusUrl' is not defined!");
-            callback(new Error("No 'power.statusUrl' defined!"));
+        if (!this.power.url) {
+            this.log.warn("Ignoring getPowerState() request, 'power.url' is not defined!");
+            callback(new Error("No 'power.url' defined!"));
             return;
         }
 
-        this._httpRequest(this.power.statusUrl, this.power.statusBody, "POST", function (error, response, body) {
+        this._httpRequest(this.power.url, this.power.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getPowerState() failed: %s", error.message);
                 callback(error);
@@ -162,16 +164,15 @@ HTTP_SPEAKER.prototype = {
     },
 
     setPowerState: function (power, callback) {
-        if (!this.power.onUrl || !this.power.offUrl) {
-            this.log.warn("Ignoring setPowerState() request, 'power.onUrl' or 'power.offUrl' is not defined!");
-            callback(new Error("No 'power.onUrl' or 'power.offUrl' defined!"));
+        if (!this.power.url) {
+            this.log.warn("Ignoring setPowerState() request, 'power.url' is not defined!");
+            callback(new Error("No 'power.url' defined!"));
             return;
         }
 
-        var url = power? this.power.onUrl: this.power.offUrl;
         var requestbody = power? this.power.onBody: this.power.offBody;
 
-        this._httpRequest(url, requestbody, this.power.httpMethod, function (error, response, body) {
+        this._httpRequest(this.power.url, requestbody, this.power.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setPowerState() failed: %s", error.message);
                 callback(error);
@@ -189,13 +190,13 @@ HTTP_SPEAKER.prototype = {
     },
 
     getVolume: function (callback) {
-        if (!this.volume.statusUrl) {
-            this.log.warn("Ignoring getVolume() request, 'volume.statusUrl' is not defined!");
-            callback(new Error("No 'volume.statusUrl' defined!"));
+        if (!this.volume.url) {
+            this.log.warn("Ignoring getVolume() request, 'volume.url' is not defined!");
+            callback(new Error("No 'volume.url' defined!"));
             return;
         }
 
-        this._httpRequest(this.volume.statusUrl, this.volume.statusBody, "POST", function (error, response, body) {
+        this._httpRequest(this.volume.url, this.volume.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getVolume() failed: %s", error.message);
                 callback(error);
@@ -217,15 +218,15 @@ HTTP_SPEAKER.prototype = {
     },
 
     setVolume: function (volume, callback) {
-        if (!this.volume.setUrl) {
-            this.log.warn("Ignoring setVolume() request, 'volume.setUrl' is not defined!");
-            callback(new Error("No 'volume.setUrl' defined!"));
+        if (!this.volume.url) {
+            this.log.warn("Ignoring setVolume() request, 'volume.url' is not defined!");
+            callback(new Error("No 'volume.url' defined!"));
             return;
         }
 
         var body = this.volume.setBody.replace("%s", volume);
 
-        this._httpRequest(this.volume.setUrl, body, this.volume.httpMethod, function (error, response, body) {
+        this._httpRequest(this.volume.url, body, this.volume.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setVolume() failed: %s", error.message);
                 callback(error);
