@@ -35,11 +35,11 @@ function HTTP_SPEAKER(log, config) {
     if (config.power) { // if power is configured enable it
         this.power.enabled = true;
         this.power.statusUrl = config.power.statusUrl;
-        this.power.statusBody = JSON.stringify({"method":"getPowerStatus","id":127,"params":[],"version":"1.1"});
+        this.power.statusBody = JSON.stringify({"method":"getCurrentExternalTerminalsStatus","id":127,"params":[],"version":"1.0"});
         this.power.onUrl = config.power.onUrl;
-        this.power.onBody = JSON.stringify({"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"});
+        this.power.onBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"active","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
         this.power.offUrl = config.power.offUrl;
-        this.power.offBody = JSON.stringify({"method":"setPowerStatus","id":127,"params":[{"status":"active"}],"version":"1.1"});
+        this.power.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
         this.power.httpMethod = config.power.httpMethod || "POST";
     }
 }
@@ -149,9 +149,11 @@ HTTP_SPEAKER.prototype = {
                 callback(new Error("getPowerState() returned http error " + response.statusCode));
             }
             else {
+                body = body.replace("[[", "[");
+                body = body.replace("]]", "]");
                 var responseBody = JSON.parse(body);
                 var responseBodyResult = responseBody.result[0];
-                var powered = responseBodyResult.status == "active";
+                var powered = responseBodyResult.active == "active";
                 this.log("Speaker is currently %s", powered? "ON": "OFF");
 
                 callback(null, powered);
@@ -167,7 +169,7 @@ HTTP_SPEAKER.prototype = {
         }
 
         var url = power? this.power.onUrl: this.power.offUrl;
-        var requestbody = power? this.power.onBody: this.power.onBody;
+        var requestbody = power? this.power.onBody: this.power.offBody;
 
         this._httpRequest(url, requestbody, this.power.httpMethod, function (error, response, body) {
             if (error) {
