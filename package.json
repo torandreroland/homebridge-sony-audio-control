@@ -1,5 +1,5 @@
 {
-  "name": "homebridge-http-speaker",
+  "name": "homebridge-sony-audio-control",
   "version": "1.1.0",
   "license": "ISC",
   "description": "Homebridge plugin to control a Sony STR-DN1080 AV-receiver",
