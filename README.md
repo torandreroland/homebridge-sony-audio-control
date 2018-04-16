@@ -28,9 +28,35 @@ Every call needs to be status code `200` if successful. The `statusUrl` call of 
     "accessories": [
         {
             "accessory": "receiver",
-            "name": "Sony Receiver",
+            "name": "Receiver",
             "baseUrl": "http://10.0.0.138:10000",
-            "power": true
+            "power": true,
+            "inputs": [
+              {
+                "name": "Apple TV",
+                "uri": "extInput:video?port=2"
+              },
+              {
+                "name": "TV",
+                "uri": "extInput:sat-catv"
+              },
+              {
+                "name": "Blu-ray",
+                "uri": "extInput:bd-dvd"
+              },
+              {
+                "name": "Xbox One",
+                "uri": "extInput:game"
+              },
+              {
+                "name": "Bluesound",
+                "uri": "extInput:tv"
+              },
+              {
+                "name": "Vinyl",
+                "uri": "extInput:sacd-cd"
+              }
+            ]
         }
     ]
 ```
