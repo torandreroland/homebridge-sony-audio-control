@@ -30,7 +30,6 @@ Every call needs to be status code `200` if successful. The `statusUrl` call of 
             "accessory": "receiver",
             "name": "Receiver",
             "baseUrl": "http://10.0.0.138:10000",
-            "power": true,
             "inputs": [
               {
                 "name": "Apple TV",

@@ -16,11 +16,11 @@ function SonyAudioControlReceiver(log, config) {
 
     this.volume = {};
     this.input = {};
-    this.power = { enabled: false };
+    this.power = {};
     this.inputServices = [];
     this.receiverServices = [];
     this.inputs = config.inputs;
-    this.receiverResponseDelay = 1000;
+    this.receiverPowerOnDelay = 200;
 
     this.volume.volumeUrl = config.baseUrl + "/sony/audio";
     this.volume.volumeStatusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
@@ -39,14 +39,11 @@ function SonyAudioControlReceiver(log, config) {
     this.input.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
     this.input.httpMethod = "POST";
 
-    if (config.power) { // if power is configured enable it
-        this.power.enabled = true;
-        this.power.url = config.baseUrl + "/sony/avContent";
-        this.power.statusBody = JSON.stringify({"method":"getCurrentExternalTerminalsStatus","id":127,"params":[],"version":"1.0"});
-        this.power.onBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"active","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
-        this.power.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
-        this.power.httpMethod = "POST";
-    }
+    this.power.url = config.baseUrl + "/sony/avContent";
+    this.power.statusBody = JSON.stringify({"method":"getCurrentExternalTerminalsStatus","id":127,"params":[],"version":"1.0"});
+    this.power.onBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"active","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
+    this.power.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
+    this.power.httpMethod = "POST";
 
 }
 
@@ -73,7 +70,7 @@ SonyAudioControlReceiver.prototype = {
         receiverServices.push(informationService);
 
         this.log("Creating volume service!");
-        var volumeService = new Service.Lightbulb("Volume on " + this.name);
+        var volumeService = new Service.Lightbulb(this.name);
 
         this.log("... configuring mute characteristic");
         volumeService
@@ -91,21 +88,18 @@ SonyAudioControlReceiver.prototype = {
 
         receiverServices.push(volumeService);
 
-        if (this.power.enabled) { // since im able to power off/on my speaker i decided to add the option to add the "On" Characteristic
+        this.log("Creating power service!");
+        var powerService = new Service.Switch(this.name, this.name);
 
-            this.log("Creating power service!");
-            var powerService = new Service.Switch("Power on " + this.name, "Power");
+        this.log("... configuring power characteristic");
+        powerService
+            .getCharacteristic(Characteristic.On)
+            .on("get", this.getPowerState.bind(this))
+            .on("set", this.setPowerState.bind(this));
 
-            this.log("... configuring power characteristic");
-            powerService
-                .getCharacteristic(Characteristic.On)
-                .on("get", this.getPowerState.bind(this))
-                .on("set", this.setPowerState.bind(this));
+        this.power.service = powerService;
 
-            this.power.service = powerService;
-
-            receiverServices.push(powerService);
-        }
+        receiverServices.push(powerService);
 
         this.log("Creating input services!");
 
@@ -124,7 +118,7 @@ SonyAudioControlReceiver.prototype = {
           var setInputFunction = new Function('newInputState', 'callback', inputSetFunctionBody);
           this.inputs[i].setInputState = setInputFunction.bind(this);
 
-          let inputService = new Service.Switch(this.inputs[i].name + " on " + this.name, this.inputs[i].name);
+          let inputService = new Service.Switch("Input " + this.inputs[i].name, this.inputs[i].name);
 
           this.log("... configuring input characteristic");
           inputService
@@ -143,16 +137,22 @@ SonyAudioControlReceiver.prototype = {
 
     getMuteState: function (callback) {
       this.log("Getting state of mute!");
-      this.getPowerState();
+      this.power.service.getCharacteristic(Characteristic.On).getValue(this.checkMuteStateOnlyWhenReceiverIsOn(callback));
+    },
 
-      if (this.power.status == 'undefined') {
-        this.sleep(this.receiverResponseDelay);
-      }
-
-      if (!this.power.status) {
-        callback(null, false);
+    checkMuteStateOnlyWhenReceiverIsOn: function (callback) {
+      this.log("Deciding whether to request mute status from receiver based on power status!");
+      if (this.power.service.getCharacteristic(Characteristic.On).value) {
+        this.getMuteStateFromReceiver(callback);
       }
       else {
+        callback(null, false);
+      }
+    },
+
+    getMuteStateFromReceiver: function (callback) {
+      this.log("Getting state of mute from receiver since power is on!");
+
         if (!this.volume.muteUrl) {
             this.log.warn("Ignoring getMuteState() request, 'mute.url' is not defined!");
             callback(new Error("No 'mute.url' defined!"));
@@ -177,23 +177,58 @@ SonyAudioControlReceiver.prototype = {
                 callback(null, currentMuteState);
             }
         }.bind(this));
-      }
     },
 
     setMuteState: function (newUnmuteState, callback) {
+      this.log("Setting state of mute!");
+      this.power.service.getCharacteristic(Characteristic.On).getValue(this.powerOnReceiverBeforeUnmutingIfNecessary(newUnmuteState, callback));
+    },
+
+    powerOnReceiverBeforeUnmutingIfNecessary: function (newUnmuteState, callback) {
+      this.log("Deciding whether to power on receiver before setting input!");
+      if (newUnmuteState && !this.power.service.getCharacteristic(Characteristic.On).value) {
+        this.powerOnReceiverToUnmute(callback);
+      }
+      else {
+        this.setMuteStateOnReceiver(newUnmuteState, callback);
+      }
+    },
+
+    powerOnReceiverToUnmute: function (callback) {
+        if (!this.power.url) {
+            this.log.warn("Ignoring setPowerState() request, 'power.url' is not defined!");
+            callback(new Error("No 'power.url' defined!"));
+            return;
+        }
+
+        this._httpRequest(this.power.url, this.power.onBody, this.power.httpMethod, function (error, response, body) {
+            if (error) {
+                this.log("powerOnReceiverToUnmute() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("powerOnReceiverToUnmute() request returned http error: %s", response.statusCode);
+                callback(new Error("powerOnReceiverToUnmute() returned http error " + response.statusCode));
+            }
+            else {
+                this.log("powerOnReceiverToUnmute() successfully set power state to ON");
+                for (let i = 0; i < this.inputServices.length; i++) {
+                  this.log("Restoring characteristics of input service " + i + " when powering on receiver to unmute!");
+                  this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
+                }
+                this.log("Restoring characteristics of volume service when powering on receiver to unmute!");
+                this.volume.service.getCharacteristic(Characteristic.On).getValue();
+                this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
+                callback();
+            }
+        }.bind(this));
+    },
+
+    setMuteStateOnReceiver: function (newUnmuteState, callback) {
         if (!this.volume.muteUrl) {
             this.log.warn("Ignoring setMuteState() request, 'mute.url' is not defined!");
             callback(new Error("No 'mute.url' defined!"));
             return;
-        }
-
-        if (newUnmuteState) {
-          this.getPowerState();
-
-          if (!this.power.status) {
-            this.setPowerState(true, callback);
-            return;
-          }
         }
 
         var requestbody = newUnmuteState? this.volume.muteOffBody: this.volume.muteOnBody;
@@ -217,24 +252,18 @@ SonyAudioControlReceiver.prototype = {
     getPowerState: function (callback) {
         if (!this.power.url) {
             this.log.warn("Ignoring getPowerState() request, 'power.url' is not defined!");
-            if (callback && typeof(callback) == "function") {
-              callback(new Error("No 'power.url' defined!"));
-            }
+            callback(new Error("No 'power.url' defined!"));
             return;
         }
 
         this._httpRequest(this.power.url, this.power.statusBody, "POST", function (error, response, body) {
             if (error) {
                 this.log("getPowerState() failed: %s", error.message);
-                if (callback && typeof(callback) == "function") {
-                  callback(error);
-                }
+                callback(error);
             }
             else if (response.statusCode !== 200) {
                 this.log("getPowerState() request returned http error: %s", response.statusCode);
-                if (callback && typeof(callback) == "function") {
-                  callback(new Error("getPowerState() returned http error " + response.statusCode));
-                }
+                callback(new Error("getPowerState() returned http error " + response.statusCode));
             }
             else {
                 body = body.replace("[[", "[");
@@ -243,10 +272,7 @@ SonyAudioControlReceiver.prototype = {
                 var responseBodyResult = responseBody.result[0];
                 var currentPowerState = responseBodyResult.active == "active";
                 this.log("Speaker is currently %s", currentPowerState? "ON": "OFF");
-                this.power.status = currentPowerState;
-                if (callback && typeof(callback) == "function") {
-                  callback(null, currentPowerState);
-                }
+                callback(null, currentPowerState);
             }
         }.bind(this));
     },
@@ -254,9 +280,7 @@ SonyAudioControlReceiver.prototype = {
     setPowerState: function (newPowerState, callback) {
         if (!this.power.url) {
             this.log.warn("Ignoring setPowerState() request, 'power.url' is not defined!");
-            if (callback && typeof(callback) == "function") {
-              callback(new Error("No 'power.url' defined!"));
-            }
+            callback(new Error("No 'power.url' defined!"));
             return;
         }
 
@@ -265,104 +289,139 @@ SonyAudioControlReceiver.prototype = {
         this._httpRequest(this.power.url, requestbody, this.power.httpMethod, function (error, response, body) {
             if (error) {
                 this.log("setPowerState() failed: %s", error.message);
-                if (callback && typeof(callback) == "function") {
-                  callback(error);
-                }
+                callback(error);
             }
             else if (response.statusCode !== 200) {
                 this.log("setPowerState() request returned http error: %s", response.statusCode);
-                if (callback && typeof(callback) == "function") {
-                  callback(new Error("setPowerState() returned http error " + response.statusCode));
-                }
+                callback(new Error("setPowerState() returned http error " + response.statusCode));
             }
             else {
                 this.log("setPowerState() successfully set power state to %s", newPowerState? "ON": "OFF");
-                if (callback && typeof(callback) == "function") {
-                  for (let i = 0; i < this.inputServices.length; i++) {
-                    if (newPowerState) {
-                      this.log("Restoring characteristics of input service " + i + " when powering on receiver using power or volume service!");
-                      this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
-                    }
-                    else {
-                      this.log("Setting on characteristics of input service " + i + " to off when powering off receiver using power or volume service!");
-                      this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-                    }
-                  }
+                for (let i = 0; i < this.inputServices.length; i++) {
                   if (newPowerState) {
-                    this.log("Restoring characteristics of volume service when powering on receiver using power or volume service!");
-                    this.volume.service.getCharacteristic(Characteristic.On).getValue();
-                    this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
+                    this.log("Restoring characteristics of input service " + i + " when powering on receiver using power or volume service!");
+                    this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
                   }
                   else {
-                    this.log("Setting on characteristics of volume service to off when powering off receiver using power or volume service!");
-                    this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
+                    this.log("Setting on characteristics of input service " + i + " to off when powering off receiver using power or volume service!");
+                    this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
                   }
-                  callback(undefined, body);
                 }
-                this.power.status = newPowerState;
+                if (newPowerState) {
+                  this.log("Restoring characteristics of volume service when powering on receiver using power or volume service!");
+                  this.volume.service.getCharacteristic(Characteristic.On).getValue();
+                  this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
+                }
+                else {
+                  this.log("Setting on characteristics of volume service to off when powering off receiver using power or volume service!");
+                  this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
+                }
+                callback(undefined, body);
             }
         }.bind(this));
     },
 
     getInputStateGeneral: function (callback, uri) {
       this.log("Getting state of input!");
-      this.getPowerState();
+      this.power.service.getCharacteristic(Characteristic.On).getValue(this.checkInputStateOnlyWhenReceiverIsOn(callback, uri));
+    },
 
-      if (this.power.status == 'undefined') {
-        this.sleep(this.receiverResponseDelay);
-      }
-
-      if (!this.power.status) {
-        callback(null, false);
+    checkInputStateOnlyWhenReceiverIsOn: function (callback, uri) {
+      this.log("Deciding whether to request input state from receiver based on power state!");
+      if (this.power.service.getCharacteristic(Characteristic.On).value) {
+        this.getInputStateFromReceiver(callback, uri);
       }
       else {
-        if (!this.input.url) {
-            this.log.warn("Ignoring getInputState() request, 'input.url' is not defined!");
-            callback(new Error("No 'input.url' defined!"));
-            return;
-        }
-
-        this._httpRequest(this.input.url, this.input.statusBody, "POST", function (error, response, body) {
-            if (error) {
-                this.log("getInputState() failed: %s", error.message);
-                callback(error);
-            }
-            else if (response.statusCode !== 200) {
-                this.log("getInputState() request returned http error: %s", response.statusCode);
-                callback(new Error("getInputState() returned http error " + response.statusCode));
-            }
-            else {
-                body = body.replace("[[", "[");
-                body = body.replace("]]", "]");
-                var responseBody = JSON.parse(body);
-                var responseBodyResult = responseBody.result[0];
-                var currentInputState = responseBodyResult.uri == uri;
-                this.log("Input is currently %s", currentInputState? "ON": "OFF");
-                callback(null, currentInputState);
-            }
-        }.bind(this));
+        callback(null, false);
       }
+    },
+
+    getInputStateFromReceiver: function (callback, uri) {
+      this.log("Getting state of input from receiver since power is on!");
+
+      if (!this.input.url) {
+          this.log.warn("Ignoring getInputState() request, 'input.url' is not defined!");
+          callback(new Error("No 'input.url' defined!"));
+          return;
+      }
+
+      this._httpRequest(this.input.url, this.input.statusBody, "POST", function (error, response, body) {
+          if (error) {
+              this.log("getInputState() failed: %s", error.message);
+              callback(error);
+          }
+          else if (response.statusCode !== 200) {
+              this.log("getInputState() request returned http error: %s", response.statusCode);
+              callback(new Error("getInputState() returned http error " + response.statusCode));
+          }
+          else {
+              body = body.replace("[[", "[");
+              body = body.replace("]]", "]");
+              var responseBody = JSON.parse(body);
+              var responseBodyResult = responseBody.result[0];
+              var currentInputState = responseBodyResult.uri == uri;
+              this.log("Input is currently %s", currentInputState? "ON": "OFF");
+              callback(null, currentInputState);
+          }
+      }.bind(this));
     },
 
     setInputStateGeneral: function (newInputState, callback, inputNumber, inputOnBody) {
       this.log("Setting state of input!");
+      this.power.service.getCharacteristic(Characteristic.On).getValue(this.powerOnReceiverBeforeChangingInputIfNecessary(newInputState, callback, inputNumber, inputOnBody));
+    },
+
+    powerOnReceiverBeforeChangingInputIfNecessary: function (newInputState, callback, inputNumber, inputOnBody) {
+      this.log("Deciding whether to power on receiver before setting input!");
+      if (newInputState && !this.power.service.getCharacteristic(Characteristic.On).value) {
+        this.setPowerStateBeforeSettingInput(newInputState, callback, inputNumber, inputOnBody);
+      }
+      else {
+        this.setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody);
+      }
+    },
+
+    setPowerStateBeforeSettingInput: function (newInputState, callback, inputNumber, inputOnBody) {
+        if (!this.power.url) {
+            this.log.warn("Ignoring setPowerState() request, 'power.url' is not defined!");
+            callback(new Error("No 'power.url' defined!"));
+            return;
+        }
+
+        this._httpRequest(this.power.url, this.power.onBody, this.power.httpMethod, function (error, response, body) {
+            if (error) {
+                this.log("setPowerStateBeforeSettingInput() failed: %s", error.message);
+                callback(error);
+            }
+            else if (response.statusCode !== 200) {
+                this.log("setPowerStateBeforeSettingInput() request returned http error: %s", response.statusCode);
+                callback(new Error("setPowerStateBeforeSettingInput() returned http error " + response.statusCode));
+            }
+            else {
+                this.log("setPowerStateBeforeSettingInput() successfully set power state to ON");
+                for (let i = 0; i < this.inputServices.length; i++) {
+                  this.log("Restoring characteristics of input service " + i + " when powering on receiver while setting input!");
+                  this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
+                }
+                this.log("Restoring characteristics of volume service when powering on receiver while setting input!");
+                this.volume.service.getCharacteristic(Characteristic.On).getValue();
+                this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
+                this.sleep(this.receiverPowerOnDelay);
+                this.setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody);
+            }
+        }.bind(this));
+    },
+
+    setInputStateonReceiver: function (newInputState, callback, inputNumber, inputOnBody) {
+      this.log("Setting state of input on receiver!");
         if (!this.input.url) {
             this.log.warn("Ignoring setInputState() request, 'input.url' is not defined!");
             callback(new Error("No 'input.url' defined!"));
             return;
         }
 
-        if (newInputState) {
-          this.getPowerState();
-
-          if (!this.power.status) {
-            this.setPowerState(true);
-            this.volume.service.getCharacteristic(Characteristic.On).getValue();
-            this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-          }
-        }
-
         var requestbody = newInputState? inputOnBody: this.power.offBody;
+        this.log("Vi kommer til å kalle følgende URL: " + this.input.url + " med følgende body: " + requestbody)
 
         this._httpRequest(this.input.url, requestbody, this.input.httpMethod, function (error, response, body) {
             if (error) {
