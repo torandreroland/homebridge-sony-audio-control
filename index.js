@@ -430,8 +430,6 @@ SonyAudioControlReceiver.prototype = {
                 this.log("Restoring characteristics of volume service when powering on receiver while setting input!");
                 this.volume.service.getCharacteristic(Characteristic.On).getValue();
                 this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-                this.soundMode.stereoService.getCharacteristic(Characteristic.On).getValue();
-                this.soundMode.surroundService.getCharacteristic(Characteristic.On).getValue();
                 this.sleep(this.receiverPowerOnDelay);
                 this.setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody);
             }
@@ -474,6 +472,13 @@ SonyAudioControlReceiver.prototype = {
                   this.log("Setting on characteristics of power and volume service to off when powering receiver off using input service!");
                   this.power.service.getCharacteristic(Characteristic.On).updateValue(false);
                   this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
+                  this.soundMode.stereoService.getCharacteristic(Characteristic.On).updateValue(false);
+                  this.soundMode.surroundService.getCharacteristic(Characteristic.On).updateValue(false);
+                }
+                else {
+                  this.log("Getting characteristics of stereo and surround service from receiver when changing input!");
+                  this.soundMode.stereoService.getCharacteristic(Characteristic.On).getValue();
+                  this.soundMode.surroundService.getCharacteristic(Characteristic.On).getValue();
                 }
             }
         }.bind(this));
