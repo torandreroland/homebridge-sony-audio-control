@@ -22,38 +22,42 @@ function SonyAudioControlReceiver(log, config) {
     this.receiverServices = [];
     this.inputs = config.inputs;
     this.receiverPowerOnDelay = 200;
+    this.outputZone = "extOutput:zone?zone=1";
+    this.baseHttpUrl = "http://" + config.ip + ":10000";
+    this.baseWsUrl = "ws://" + config.ip + ":10000";
 
-    this.volume.volumeUrl = config.baseUrl + "/sony/audio";
+    this.volume.volumeUrl = this.baseHttpUrl + "/sony/audio";
     this.volume.volumeStatusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.volumeSetBody = JSON.stringify({"method":"setAudioVolume","id":127,"params":[{"volume":"%s","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.volumeHttpMethod = "POST";
 
-    this.volume.muteUrl = config.baseUrl + "/sony/audio";
+    this.volume.muteUrl = this.baseHttpUrl + "/sony/audio";
     this.volume.muteStatusBody = JSON.stringify({"method":"getVolumeInformation","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.muteOnBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"on","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.muteOffBody = JSON.stringify({"method":"setAudioMute","id":127,"params":[{"mute":"off","output":"extOutput:zone?zone=1"}],"version":"1.1"});
     this.volume.muteHttpMethod = "POST";
 
-    this.input.url = config.baseUrl + "/sony/avContent";
+    this.input.url = this.baseHttpUrl + "/sony/avContent";
     this.input.statusBody = JSON.stringify({"method":"getPlayingContentInfo","id":127,"params":[{"output":"extOutput:zone?zone=1"}],"version":"1.2"});
     this.input.onBodyBasis = JSON.stringify({"method":"setPlayContent","id":127,"params":[{"output":"extOutput:zone?zone=1","uri":"%s"}],"version":"1.2"});
     this.input.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
     this.input.httpMethod = "POST";
 
-    this.power.url = config.baseUrl + "/sony/avContent";
+    this.power.url = this.baseHttpUrl + "/sony/avContent";
     this.power.statusBody = JSON.stringify({"method":"getCurrentExternalTerminalsStatus","id":127,"params":[],"version":"1.0"});
     this.power.onBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"active","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
     this.power.offBody = JSON.stringify({"method":"setActiveTerminal","id":127,"params":[{"active":"inactive","uri":"extOutput:zone?zone=1"}],"version":"1.0"});
     this.power.httpMethod = "POST";
 
-    this.soundMode.url = config.baseUrl + "/sony/audio";
+    this.soundMode.url = this.baseHttpUrl + "/sony/audio";
     this.soundMode.statusBody = JSON.stringify({"method":"getSoundSettings","id":127,"params":[{"target":"soundField"}],"version":"1.1"});
-    this.soundMode.stereoValue = "2chStereo"
+    this.soundMode.stereoValue = "2chStereo";
     this.soundMode.stereoOnBody = JSON.stringify({"method":"setSoundSettings","id":127,"params":[{"settings":[{"value":"2chStereo","target":"soundField"}]}],"version":"1.1"});
-    this.soundMode.surroundValue = "dolbySurround"
+    this.soundMode.surroundValue = "dolbySurround";
     this.soundMode.surroundOnBody = JSON.stringify({"method":"setSoundSettings","id":127,"params":[{"settings":[{"value":"dolbySurround","target":"soundField"}]}],"version":"1.1"});
     this.soundMode.httpMethod = "POST";
-
+    this.getVolumeInformationNotifcations();
+    this.getActiveInputAndOutputNotification();
 }
 
 SonyAudioControlReceiver.prototype = {
@@ -160,6 +164,7 @@ SonyAudioControlReceiver.prototype = {
               .getCharacteristic(Characteristic.On)
               .on("get", this.inputs[i].getInputState.bind(this))
               .on("set", this.inputs[i].setInputState.bind(this));
+          this.inputs[i].service = inputService;
           inputServices.push(inputService);
         }
 
@@ -262,6 +267,7 @@ SonyAudioControlReceiver.prototype = {
             }
         }.bind(this));
       }
+
     },
 
     getPowerState: function (callback) {
@@ -631,6 +637,213 @@ SonyAudioControlReceiver.prototype = {
                 callback(error, response, body);
             }
         );
-    }
+    },
 
+    getVolumeInformationNotifcations: function () {
+      var WebSocketClient = require('websocket').client;
+      var client = new WebSocketClient();
+
+      function switchNotifications(id,disable,enable){
+        return {
+          "method": "switchNotifications",
+          "id": id,
+          "params": [{
+            "disabled": disable,
+            "enabled": enable
+          }],
+          "version": "1.0"
+        };
+      }
+
+      client.on('connectFailed', function(error) {
+        this.log('Connect Error: ' + error.toString());
+      }.bind(this));
+
+      client.on('connect', function(connection) {
+        this.log('WebSocket Client Connected');
+
+        connection.on('error', function(error) {
+          this.log("Connection Error: " + error.toString());
+        }.bind(this));
+
+        connection.on('close', function() {
+          this.log('WebSocket Connection Closed');
+        }.bind(this));
+
+        connection.on('message', function(message) {
+          this.log("Connection established using WebSocket");
+          if (message.type === 'utf8') {
+            this.log("Got notification from receiver using WebSocket");
+            var msg = JSON.parse(message.utf8Data);
+            // Check whether the message ID equals '1', to avoid creating a loop.
+            if (msg.id == 1){
+              let all_notifications = msg.result[0].disabled.concat(msg.result[0].enabled);
+              var enable = [];
+              var disable = [];
+              // Enable only the 'notifyPlayingContentInfo' notifications.
+              all_notifications.forEach(
+                item => item.name == "notifyVolumeInformation" ? enable.push(item) : disable.push(item) );
+              connection.sendUTF(JSON.stringify(switchNotifications(127,disable,enable)));
+            } else {
+              this.log("Received: '" + message.utf8Data + "'");
+              this.log("Received: '" + msg + "'");
+              if (msg.hasOwnProperty("method")) {
+                if (msg.method == "notifyVolumeInformation") {
+                  for (let i = 0; i < msg.params.length; i++) {
+                    if (msg.params[i].output == this.outputZone) {
+                      var unmuteStatus;
+                      if (msg.params[i].mute == "off") {
+                        unmuteStatus = true;
+                      }
+                      else {
+                        unmuteStatus = false;
+                      }
+                      var volumeLevel = msg.params[i].volume;
+                      this.volume.service.getCharacteristic(Characteristic.Brightness).updateValue(volumeLevel);
+                      this.log("Set the volume to " + volumeLevel);
+                      this.volume.service.getCharacteristic(Characteristic.On).updateValue(unmuteStatus);
+                      this.log("Set the unmute status to " + unmuteStatus);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }.bind(this));
+
+        function subscribe() {
+          if (connection.connected) {
+            // To get current notification settings, send an empty 'switchNotifications'
+            // message with an ID of '1'.
+            connection.sendUTF(JSON.stringify(switchNotifications(1,[],[])));
+          }
+        }
+
+        subscribe();
+
+      }.bind(this));
+
+      var AudioWsUrl = this.baseWsUrl + "/sony/audio";
+      client.connect(AudioWsUrl);
+
+    },
+
+    getActiveInputAndOutputNotification: function () {
+      var WebSocketClient = require('websocket').client;
+      var client = new WebSocketClient();
+
+      function switchNotifications(id,disable,enable){
+        return {
+          "method": "switchNotifications",
+          "id": id,
+          "params": [{
+            "disabled": disable,
+            "enabled": enable
+          }],
+          "version": "1.0"
+        };
+      }
+
+      client.on('connectFailed', function(error) {
+        this.log('Connect Error: ' + error.toString());
+      }.bind(this));
+
+      client.on('connect', function(connection) {
+        this.log('WebSocket Client Connected');
+
+        connection.on('error', function(error) {
+          this.log("Connection Error: " + error.toString());
+        }.bind(this));
+
+        connection.on('close', function() {
+          this.log('WebSocket Connection Closed');
+        }.bind(this));
+
+        connection.on('message', function(message) {
+          this.log("Connection established using WebSocket");
+          if (message.type === 'utf8') {
+            this.log("Got notification from receiver using WebSocket");
+            var msg = JSON.parse(message.utf8Data);
+            // Check whether the message ID equals '1', to avoid creating a loop.
+            if (msg.id == 1){
+              let all_notifications = msg.result[0].disabled.concat(msg.result[0].enabled);
+              var enable = [];
+              var disable = [];
+              // Enable only the 'notifyPlayingContentInfo' notifications.
+              all_notifications.forEach(
+                item => item.name == "notifyExternalTerminalStatus" || item.name == "notifyPlayingContentInfo" ? enable.push(item) : disable.push(item) );
+              connection.sendUTF(JSON.stringify(switchNotifications(127,disable,enable)));
+            }
+            else {
+              this.log("Received: '" + message.utf8Data + "'");
+              this.log("Received: '" + msg + "'");
+              if (msg.hasOwnProperty("method")) {
+                if (msg.method == "notifyExternalTerminalStatus") {
+                  for (let i = 0; i < msg.params.length; i++) {
+                    if (msg.params[i].uri == this.outputZone) {
+                      var newPowerState;
+                      if (msg.params[i].active == "active") {
+                        newPowerState = true;
+                      }
+                      else {
+                        newPowerState = false;
+                      }
+                      this.power.service.getCharacteristic(Characteristic.On).updateValue(newPowerState);
+                      this.log("Set the power to " + newPowerState);
+                      if (newPowerState == true) {
+                        for (let j = 0; j < this.receiverServices.length; j++) {
+                          if (this.receiverServices[j] != this.power.service) {
+                            this.receiverServices[j].getCharacteristic(Characteristic.On).getValue();
+                          }
+                        }
+                      }
+                      else {
+                        for (let j = 0; j < this.receiverServices.length; j++) {
+                          if (this.receiverServices[j] != this.power.service) {
+                            this.receiverServices[j].getCharacteristic(Characteristic.On).updateValue(false);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                else if (msg.method == "notifyPlayingContentInfo") {
+                  for (let i = 0; i < msg.params.length; i++) {
+                    if (msg.params[i].output == this.outputZone) {
+                      for (let j = 0; j < this.inputs.length; j++) {
+                        if (msg.params[i].uri == this.inputs[j].uri) {
+                          this.inputs[j].service.getCharacteristic(Characteristic.On).updateValue(true);
+                          this.log("Set characteristic of input " + this.inputs[j].name + " to on.");
+                          this.soundMode.stereoService.getCharacteristic(Characteristic.On).getValue();
+                          this.soundMode.surroundService.getCharacteristic(Characteristic.On).getValue();
+                        }
+                        else {
+                          this.inputs[j].service.getCharacteristic(Characteristic.On).updateValue(false);
+                          this.log("Set characteristic of input " + this.inputs[j].name + " to off.");
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }.bind(this));
+
+        function subscribe() {
+          if (connection.connected) {
+            // To get current notification settings, send an empty 'switchNotifications'
+            // message with an ID of '1'.
+            connection.sendUTF(JSON.stringify(switchNotifications(1,[],[])));
+          }
+        }
+
+        subscribe();
+
+      }.bind(this));
+
+      var AudioWsUrl = this.baseWsUrl + "/sony/avContent";
+      client.connect(AudioWsUrl);
+
+    }
 };
