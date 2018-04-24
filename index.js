@@ -668,6 +668,9 @@ SonyAudioControlReceiver.prototype = {
 
         connection.on('close', function() {
           this.log('WebSocket Connection Closed');
+          setTimeout(function() {
+            client.connect(AudioWsUrl);
+          },1000);
         }.bind(this));
 
         connection.on('message', function(message) {
@@ -757,6 +760,9 @@ SonyAudioControlReceiver.prototype = {
 
         connection.on('close', function() {
           this.log('WebSocket Connection Closed');
+          setTimeout(function() {
+            client.connect(AudioWsUrl);
+          },1000);
         }.bind(this));
 
         connection.on('message', function(message) {
