@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "npm": "^5.8.0",
-    "request": "^2.65.0"
+    "request": "^2.65.0",
+    "websocket": "^1.0.28"
   },
   "devDependencies": {
     "chai": "^3.4.1",
