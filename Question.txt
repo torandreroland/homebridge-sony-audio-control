@@ -1,0 +1,8 @@
+I was unable to add an issue, So I create a file here..... 
+
+Is there any way to use hostname instead ip address?? my sony str dn 1080 registers on network using chromecast.local hostname (and I cannot change it)
+
+I understand you disabled autodiscovery, but I think using hostname is a better option than ip.
+
+In my case everytime I reset wifi router, devices kates different address by DHCP.. so my receiver changes IP often.
+
