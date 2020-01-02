@@ -729,6 +729,9 @@ SonyAudioControlReceiver.prototype = {
 
     client.on('connectFailed', function (error) {
       this.log('Connect Error: ' + error.toString());
+      setTimeout(function () {
+        client.connect(AudioWsUrl);
+      }, 1000);
     }.bind(this));
 
     client.on('connect', function (connection) {
@@ -736,6 +739,9 @@ SonyAudioControlReceiver.prototype = {
 
       connection.on('error', function (error) {
         this.log("Connection Error: " + error.toString());
+        setTimeout(function () {
+          client.connect(AudioWsUrl);
+        }, 1000);
       }.bind(this));
 
       connection.on('close', function () {
@@ -750,12 +756,10 @@ SonyAudioControlReceiver.prototype = {
         if (message.type === 'utf8') {
           this.log("Got notification from receiver using WebSocket");
           var msg = JSON.parse(message.utf8Data);
-          // Check whether the message ID equals '1', to avoid creating a loop.
           if (msg.id == 1) {
             let all_notifications = msg.result[0].disabled.concat(msg.result[0].enabled);
             var enable = [];
             var disable = [];
-            // Enable only the 'notifyPlayingContentInfo' notifications.
             all_notifications.forEach(
               item => item.name == "notifyVolumeInformation" ? enable.push(item) : disable.push(item));
             connection.sendUTF(JSON.stringify(switchNotifications(127, disable, enable)));
@@ -787,8 +791,6 @@ SonyAudioControlReceiver.prototype = {
 
       function subscribe() {
         if (connection.connected) {
-          // To get current notification settings, send an empty 'switchNotifications'
-          // message with an ID of '1'.
           connection.sendUTF(JSON.stringify(switchNotifications(1, [], [])));
         }
       }
@@ -820,6 +822,9 @@ SonyAudioControlReceiver.prototype = {
 
     client.on('connectFailed', function (error) {
       this.log('Connect Error: ' + error.toString());
+      setTimeout(function () {
+        client.connect(AudioWsUrl);
+      }, 1000);
     }.bind(this));
 
     client.on('connect', function (connection) {
@@ -827,6 +832,9 @@ SonyAudioControlReceiver.prototype = {
 
       connection.on('error', function (error) {
         this.log("Connection Error: " + error.toString());
+        setTimeout(function () {
+          client.connect(AudioWsUrl);
+        }, 1000);
       }.bind(this));
 
       connection.on('close', function () {
@@ -841,12 +849,10 @@ SonyAudioControlReceiver.prototype = {
         if (message.type === 'utf8') {
           this.log("Got notification from receiver using WebSocket");
           var msg = JSON.parse(message.utf8Data);
-          // Check whether the message ID equals '1', to avoid creating a loop.
           if (msg.id == 1) {
             let all_notifications = msg.result[0].disabled.concat(msg.result[0].enabled);
             var enable = [];
             var disable = [];
-            // Enable only the 'notifyPlayingContentInfo' notifications.
             all_notifications.forEach(
               item => item.name == "notifyExternalTerminalStatus" || item.name == "notifyPlayingContentInfo" ? enable.push(item) : disable.push(item));
             connection.sendUTF(JSON.stringify(switchNotifications(127, disable, enable)));
@@ -866,6 +872,7 @@ SonyAudioControlReceiver.prototype = {
                     this.power.service.getCharacteristic(Characteristic.On).updateValue(newPowerState);
                     this.log("Set the power to " + newPowerState);
                     if (newPowerState == true) {
+                      this.sleep(this.receiverPowerOnDelay);
                       for (let j = 0; j < this.receiverServices.length; j++) {
                         if (this.receiverServices[j] != this.power.service) {
                           this.receiverServices[j].getCharacteristic(Characteristic.On).getValue();
@@ -904,8 +911,6 @@ SonyAudioControlReceiver.prototype = {
 
       function subscribe() {
         if (connection.connected) {
-          // To get current notification settings, send an empty 'switchNotifications'
-          // message with an ID of '1'.
           connection.sendUTF(JSON.stringify(switchNotifications(1, [], [])));
         }
       }
