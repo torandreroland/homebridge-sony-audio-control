@@ -543,11 +543,11 @@ SonyAudioControlReceiver.prototype = {
             this.log("Restoring characteristics of volume service when powering on receiver while setting input!");
             this.volume.service.getCharacteristic(Characteristic.On).getValue();
             this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-            setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody);
+            setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody);
           }
         }.bind(this));
       } else {
-        setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody);
+        setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody);
       }
     
       function setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody) {
@@ -697,11 +697,11 @@ SonyAudioControlReceiver.prototype = {
           this.log("Restoring characteristics of volume service when powering on receiver while setting input!");
           this.volume.service.getCharacteristic(Characteristic.On).getValue();
           this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-          setSoundModeOnReceiver(newSoundModeState, callback, soundModeOnBody);
+          setSoundModeOnReceiver.bind(this)(newSoundModeState, callback, soundModeOnBody);
         }
       }.bind(this));
     } else {
-      setSoundModeOnReceiver(newSoundModeState, callback, soundModeOnBody);
+      setSoundModeOnReceiver.bind(this)(newSoundModeState, callback, soundModeOnBody);
     }
 
     function setSoundModeOnReceiver(newSoundModeState, callback, soundModeOnBody) {
