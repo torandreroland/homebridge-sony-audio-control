@@ -25,7 +25,7 @@ Set "name" to what you prefer to refer to the device as using Homekit or Siri.
 
 "accessory" is used by homebridge to initialize the plugin correctly, so do NOT edit this setting.
 
-To disable network standby, set enableNetworkStandby to false (not recommended as you can't turn on receiver again, but it lowers power consumption while off considerably).
+To disable network standby, set enableNetworkStandby to false (not recommended as you can't turn on receiver again through a network connection, but it significantly lowers power consumption while off).
 
 For every external input you want to enable, you have to add a new input object with a "name" and "uri". Again "name" can be set to what you prefer to refer to the input as using Homekit or Siri, while "uri" have to correspond to the Device Resource URI per [Device URI](https://developer.sony.com/develop/audio-control-api/api-references/device-uri).  
 
