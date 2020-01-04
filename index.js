@@ -346,8 +346,13 @@ SonyAudioControlReceiver.prototype = {
     return receiverServices;
   },
 
-  getMuteState(callback) {
+  getMuteState: function (callback) {
     this.log("Getting state of mute!");
+    this.power.service.getCharacteristic(Characteristic.On).getValue(this.getUnmuteStateFromReceiverIfOnElseReportMuted(callback));
+  },
+
+  //TODO Flytt denne
+  getUnmuteStateFromReceiverIfOnElseReportMuted: function (callback) {
     this.log("Deciding whether to request mute status from receiver based on power status!");
     if (this.power.service.getCharacteristic(Characteristic.On).value) {
       this.log("Getting state of mute from receiver since power is on!");
@@ -373,8 +378,13 @@ SonyAudioControlReceiver.prototype = {
     }
   },
 
-  setMuteState(newUnmuteState, callback) {
+  setMuteState: function (newUnmuteState, callback) {
     this.log("Setting state of mute!");
+    this.power.service.getCharacteristic(Characteristic.On).getValue(this.setUnmuteStateByPoweringOnReceiverIfReceiverIsOffElseIssueMuteCommand(newUnmuteState, callback));
+  },
+
+  //TODO Flytt denne
+  setUnmuteStateByPoweringOnReceiverIfReceiverIsOffElseIssueMuteCommand: function (newUnmuteState, callback) {
     if (newUnmuteState && !this.power.service.getCharacteristic(Characteristic.On).value) {
       this.log("Unmuting by powering on receiver since receiver is off!");
       this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
@@ -483,8 +493,13 @@ SonyAudioControlReceiver.prototype = {
     }.bind(this));
   },
 
-  getInputStateGeneral(callback, uri) {
+  getInputStateGeneral: function (callback, uri) {
     this.log("Getting state of input!");
+    this.power.service.getCharacteristic(Characteristic.On).getValue(this.checkInputStateOnlyWhenReceiverIsOn(callback, uri));
+  },
+
+  //TODO Flytt denne
+  checkInputStateOnlyWhenReceiverIsOn: function (callback, uri) {
     if (this.power.service.getCharacteristic(Characteristic.On).value) {
 
       this.log("Getting state of input from receiver since power is on!");
@@ -512,8 +527,13 @@ SonyAudioControlReceiver.prototype = {
     }
   },
 
-  setInputStateGeneral(newInputState, callback, inputNumber, inputOnBody) {
+  setInputStateGeneral: function (newInputState, callback, inputNumber, inputOnBody) {
     this.log("Setting state of input!");
+    this.power.service.getCharacteristic(Characteristic.On).getValue(this.powerOnReceiverBeforeChangingInputIfNecessary(newInputState, callback, inputNumber, inputOnBody));
+  },
+
+  //TODO Flytt denne
+  powerOnReceiverBeforeChangingInputIfNecessary: function (newInputState, callback, inputNumber, inputOnBody) {
     if (newInputState && !this.power.service.getCharacteristic(Characteristic.On).value) {
       this.log("Powering on receiver before setting input!");
 
@@ -544,7 +564,7 @@ SonyAudioControlReceiver.prototype = {
     }
   },
 
-  // TODO Flytt denne
+  //TODO Flytt denne
   setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody) {
     this.log("Setting state of input on receiver!");
 
@@ -698,7 +718,7 @@ SonyAudioControlReceiver.prototype = {
     }
   },
 
-  // TODO Flytt denne
+  //TODO Flytt denne
   setSoundModeOnReceiver(newSoundModeState, callback, soundModeOnBody) {
     this.log("Setting soundmode on receiver!");
 
