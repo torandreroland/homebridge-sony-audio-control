@@ -18,6 +18,7 @@
     "url": "git@github.com:torandreroland/homebridge-sony-audio-control.git"
   },
   "dependencies": {
+    "np": "^5.2.1",
     "npm": "^5.8.0",
     "request": "^2.65.0",
     "websocket": "^1.0.28"
