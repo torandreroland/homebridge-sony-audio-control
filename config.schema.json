@@ -1,0 +1,84 @@
+{
+    "pluginAlias": "receiver",
+    "pluginType": "accessory",
+    "singular": false,
+    "headerDisplay": "See [API-documentation](https://developer.sony.com/develop/audio-control-api/api-references/device-uri) for input URIs",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "Name",
+                "type": "string",
+                "default": "Sony Receiver",
+                "required": true
+            },
+            "ip": {
+                "title": "IP address",
+                "type": "string",
+                "format": "ipv4",
+                "required": true,
+                "description": "The IP address of the device"
+            },
+            "enableNetworkStandby": {
+                "title": "Enable Network Standby",
+                "type": "boolean",
+                "default": true,
+                "required": false,
+                "description": "Enable to allow to turn on from standby (significantly raises energy consumption)"
+            },
+            "inputs": {
+                "title": "Inputs",
+                "type": "array",
+                "required": false,
+                "items": {
+                    "title": "Input",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "title": "Name",
+                            "type": "string",
+                            "default": "TV",
+                            "placeholder": "TV",
+                            "required": true
+                        },
+                        "uri": {
+                            "title": "URI",
+                            "type": "string",
+                            "format": "uri",
+                            "default": "extInput:sat-catv",
+                            "placeholder": "extInput:sat-catv",
+                            "required": true,
+                            "description": "See link in header for URIs"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "layout": [
+        {
+            "key": "name"
+        },
+        {
+            "key": "ip"
+        },
+        {
+            "key": "enableNetworkStandby"
+        },
+        {
+            "type": "section",
+            "title": "Inputs",
+            "expandable": true,
+            "expanded": false,
+            "key": "inputs",
+            "items": [
+                {
+                    "key": "inputs[].name"
+                },
+                {
+                    "key": "inputs[].uri"
+                }
+            ]
+        }
+    ]
+}
