@@ -341,10 +341,10 @@ SonyAudioControlReceiver.prototype = {
         this.log.debug("Getting state of mute from receiver since power is on!");
         this._httpRequest(this.volume.muteUrl, this.volume.muteStatusBody, function(error, response, body) {
           if (error) {
-            this.log("getMuteState() failed: %s", error.message);
+            this.log.error("getMuteState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("getMuteState() request returned http error: %s", response.statusCode);
+            this.log.error("getMuteState() request returned http error: %s", response.statusCode);
             callback(new Error("getMuteState() returned http error " + response.statusCode));
           } else {
             body = body.replace("[[", "[");
@@ -371,10 +371,10 @@ SonyAudioControlReceiver.prototype = {
         this.log.debug("Unmuting by powering on receiver since receiver is off!");
         this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
           if (error) {
-            this.log("setPowerState() failed: %s", error.message);
+            this.log.error("setPowerState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setPowerState() request returned http error: %s", response.statusCode);
+            this.log.error("setPowerState() request returned http error: %s", response.statusCode);
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power state to on");
@@ -398,10 +398,10 @@ SonyAudioControlReceiver.prototype = {
         let requestbody = newUnmuteState ? this.volume.muteOffBody : this.volume.muteOnBody;
         this._httpRequest(this.volume.muteUrl, requestbody, function(error, response, body) {
           if (error) {
-            this.log("setMuteState() failed: %s", error.message);
+            this.log.error("setMuteState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setMuteState() request returned http error: %s", response.statusCode);
+            this.log.error("setMuteState() request returned http error: %s", response.statusCode);
             callback(new Error("setMuteState() returned http error " + response.statusCode));
           } else {
             this.log("Set mute to %s", newUnmuteState ? "off" : "on");
@@ -415,10 +415,10 @@ SonyAudioControlReceiver.prototype = {
   getPowerState(callback) {
     this._httpRequest(this.power.url, this.power.statusBody, function(error, response, body) {
       if (error) {
-        this.log("getPowerState() failed: %s", error.message);
+        this.log.error("getPowerState() failed: %s", error.message);
         callback(error);
       } else if (response.statusCode !== 200) {
-        this.log("getPowerState() request returned http error: %s", response.statusCode);
+        this.log.error("getPowerState() request returned http error: %s", response.statusCode);
         callback(new Error("getPowerState() returned http error " + response.statusCode));
       } else {
         body = body.replace("[[", "[");
@@ -438,10 +438,10 @@ SonyAudioControlReceiver.prototype = {
 
     this._httpRequest(this.power.url, requestbody, function(error, response, body) {
       if (error) {
-        this.log("setPowerState() failed: %s", error.message);
+        this.log.error("setPowerState() failed: %s", error.message);
         callback(error);
       } else if (response.statusCode !== 200) {
-        this.log("setPowerState() request returned http error: %s", response.statusCode);
+        this.log.error("setPowerState() request returned http error: %s", response.statusCode);
         callback(new Error("setPowerState() returned http error " + response.statusCode));
       } else {
         this.log("Set power to %s", newPowerState ? "on" : "off");
@@ -486,10 +486,10 @@ SonyAudioControlReceiver.prototype = {
   
         this._httpRequest(this.input.url, this.input.statusBody, function(error, response, body) {
           if (error) {
-            this.log("getInputState() failed: %s", error.message);
+            this.log.error("getInputState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("getInputState() request returned http error: %s", response.statusCode);
+            this.log.error("getInputState() request returned http error: %s", response.statusCode);
             callback(new Error("getInputState() returned http error " + response.statusCode));
           } else {
             body = body.replace("[[", "[");
@@ -518,10 +518,10 @@ SonyAudioControlReceiver.prototype = {
   
         this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
           if (error) {
-            this.log("setPowerState() failed: %s", error.message);
+            this.log.error("setPowerState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setPowerState() request returned http error: %s", response.statusCode);
+            this.log.error("setPowerState() request returned http error: %s", response.statusCode);
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power to on");
@@ -549,10 +549,10 @@ SonyAudioControlReceiver.prototype = {
     
         this._httpRequest(this.input.url, requestbody, function(error, response, body) {
           if (error) {
-            this.log("setInputState() failed: %s", error.message);
+            this.log.error("setInputState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setInputState() request returned http error: %s", response.statusCode);
+            this.log.error("setInputState() request returned http error: %s", response.statusCode);
             callback(new Error("setInputState() returned http error " + response.statusCode));
           } else {
             newInputState ? this.log("Set input %s to on", this.inputs[inputNumber].name) : this.log.debug("Set input %s to off", this.inputs[inputNumber].name);
@@ -594,10 +594,10 @@ SonyAudioControlReceiver.prototype = {
   
         this._httpRequest(this.soundField.url, this.soundField.statusBody, function(error, response, body) {
           if (error) {
-            this.log("getSoundFieldState() failed: %s", error.message);
+            this.log.error("getSoundFieldState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("getSoundFieldState() request returned http error: %s", response.statusCode);
+            this.log.error("getSoundFieldState() request returned http error: %s", response.statusCode);
             callback(new Error("getSoundFieldState() returned http error " + response.statusCode));
           } else {
             body = body.replace("[[", "[");
@@ -626,10 +626,10 @@ SonyAudioControlReceiver.prototype = {
   
         this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
           if (error) {
-            this.log("setPowerState() failed: %s", error.message);
+            this.log.error("setPowerState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setPowerState() request returned http error: %s", response.statusCode);
+            this.log.error("setPowerState() request returned http error: %s", response.statusCode);
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power to on");
@@ -658,10 +658,10 @@ SonyAudioControlReceiver.prototype = {
     
         this._httpRequest(requestUrl, requestbody, function(error, response, body) {
           if (error) {
-            this.log("setSoundFieldState() failed: %s", error.message);
+            this.log.error("setSoundFieldState() failed: %s", error.message);
             callback(error);
           } else if (response.statusCode !== 200) {
-            this.log("setSoundFieldState() request returned http error: %s", response.statusCode);
+            this.log.error("setSoundFieldState() request returned http error: %s", response.statusCode);
             callback(new Error("setSoundFieldState() returned http error " + response.statusCode));
           } else {
             newSoundFieldState ? this.log("Set soundfield %s to on", this.soundFields[soundFieldNumber].name) : this.log.debug("Set soundfield %s to off", this.soundFields[soundFieldNumber].name);
@@ -692,10 +692,10 @@ SonyAudioControlReceiver.prototype = {
 
     this._httpRequest(this.volume.volumeUrl, this.volume.volumeStatusBody, function(error, response, body) {
       if (error) {
-        this.log("getVolume() failed: %s", error.message);
+        this.log.error("getVolume() failed: %s", error.message);
         callback(error);
       } else if (response.statusCode !== 200) {
-        this.log("getVolume() request returned http error: %s", response.statusCode);
+        this.log.error("getVolume() request returned http error: %s", response.statusCode);
         callback(new Error("getVolume() returned http error " + response.statusCode));
       } else {
         body = body.replace("[[", "[");
@@ -714,10 +714,10 @@ SonyAudioControlReceiver.prototype = {
 
     this._httpRequest(this.volume.volumeUrl, requestbody, function(error, response, body) {
       if (error) {
-        this.log("setVolume() failed: %s", error.message);
+        this.log.error("setVolume() failed: %s", error.message);
         callback(error);
       } else if (response.statusCode !== 200) {
-        this.log("setVolume() request returned http error: %s", response.statusCode);
+        this.log.error("setVolume() request returned http error: %s", response.statusCode);
         callback(new Error("setVolume() returned http error " + response.statusCode));
       } else {
         this.log("Set volume to %s", newVolumeState);
@@ -748,9 +748,9 @@ SonyAudioControlReceiver.prototype = {
   setNetWorkStandby() {
     this._httpRequest(this.networkStandby.url, this.networkStandby.enableNetworkStandby ? this.networkStandby.onBody : this.networkStandby.offBody, function(error, response, body) {
       if (error) {
-        this.log("setPowerSettings() failed: %s", error.message);
+        this.log.error("setPowerSettings() failed: %s", error.message);
       } else if (response.statusCode !== 200) {
-        this.log("setPowerSettings() request returned http error: %s", response.statusCode);
+        this.log.error("setPowerSettings() request returned http error: %s", response.statusCode);
       } else {
         this.log("Network standby is currently %s", this.networkStandby.enableNetworkStandby ? "on" : "off");
       }
