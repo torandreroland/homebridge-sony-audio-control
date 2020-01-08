@@ -31,10 +31,11 @@ function SonyAudioControlReceiver(log, config) {
 }
 
 SonyAudioControlReceiver.prototype = {
-  receiverPowerOnDelay: 200,
+  receiverPowerOnDelay: 1000,
   outputZone: "extOutput:zone?zone=1",
   inputServices: [],
   receiverServices: [],
+  onServices: [],
   soundFields: [
     {
       "name": "Surround Mode",
@@ -231,7 +232,7 @@ SonyAudioControlReceiver.prototype = {
       .setCharacteristic(Characteristic.Manufacturer, "Sony")
       .setCharacteristic(Characteristic.Model, "STR-DN1080")
       .setCharacteristic(Characteristic.SerialNumber, "Serial number 1");
-    
+
     this.informationService = informationService;
 
     receiverServices.push(informationService);
@@ -252,7 +253,7 @@ SonyAudioControlReceiver.prototype = {
       .on("set", this.setVolume.bind(this));
 
     this.volume.service = volumeService;
-    
+
     receiverServices.push(volumeService);
 
     this.log("Creating power service!");
@@ -325,8 +326,18 @@ SonyAudioControlReceiver.prototype = {
 
     receiverServices = receiverServices.concat(soundFieldServices);
     this.soundFieldServices = soundFieldServices;
-    
+
     this.receiverServices = receiverServices;
+
+    var onServices = [];
+
+    for (let i = 0; i < this.receiverServices.length; i++) {
+      if (this.receiverServices[i] != this.informationService) {
+        onServices.push(this.receiverServices[i]);
+      }
+    }
+
+    this.onServices = onServices;
 
     return receiverServices;
   },
@@ -378,19 +389,10 @@ SonyAudioControlReceiver.prototype = {
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power state to on");
+            this.log.debug("Waiting for device to turn on...");
             this._sleep(this.receiverPowerOnDelay);
-            for (let i = 0; i < this.inputServices.length; i++) {
-              this.log.debug("Restoring characteristics of input service " + i + " when powering on receiver to unmute!");
-              this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
-            }
-            this.log.debug("Restoring characteristics of volume service when powering on receiver to unmute!");
-            this.volume.service.getCharacteristic(Characteristic.On).getValue();
-            this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-            this.log.debug("Restoring characteristics of soundmode services when powering on receiver to unmute!");
-            for (let i = 0; i < this.soundFieldServices.length; i++) {
-              this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
-            }
             callback();
+            this._refreshOnServices.bind(this)(this.volume.service, true, true);
           }
         }.bind(this));
       } else {
@@ -406,6 +408,7 @@ SonyAudioControlReceiver.prototype = {
           } else {
             this.log("Set mute to %s", newUnmuteState ? "off" : "on");
             callback(undefined, body);
+            this._refreshOnServices.bind(this)(this.volume.service, newUnmuteState, false);
           }
         }.bind(this));
       }
@@ -445,32 +448,12 @@ SonyAudioControlReceiver.prototype = {
         callback(new Error("setPowerState() returned http error " + response.statusCode));
       } else {
         this.log("Set power to %s", newPowerState ? "on" : "off");
-        this._sleep(this.receiverPowerOnDelay);
         if (newPowerState) {
-          for (let i = 0; i < this.inputServices.length; i++) {
-            this.log.debug("Restoring characteristics of input service " + i + " when powering on receiver using power service!");
-            this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
-          }
-          this.log.debug("Restoring characteristics of volume service when powering on receiver using power service!");
-          this.volume.service.getCharacteristic(Characteristic.On).getValue();
-          this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-          this.log.debug("Restoring characteristics of soundmode services when powering on receiver using power service!");
-          for (let i = 0; i < this.soundFieldServices.length; i++) {
-            this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
-          }
-        } else {
-          for (let i = 0; i < this.inputServices.length; i++) {
-            this.log.debug("Setting on characteristics of input service " + i + " to off when powering off receiver using power service!");
-            this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-          }
-          this.log.debug("Setting on characteristics of volume service to off when powering off receiver using power service!");
-          this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
-          this.log.debug("Setting on characteristics of soundmode services to off when powering off receiver using power service!");
-          for (let i = 0; i < this.soundFieldServices.length; i++) {
-            this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-          }
+          this.log.debug("Waiting for device to turn on...");
+          this._sleep(this.receiverPowerOnDelay);
         }
         callback(undefined, body);
+        this._refreshOnServices.bind(this)(this.power.service, newPowerState, newPowerState);
       }
     }.bind(this));
   },
@@ -481,9 +464,9 @@ SonyAudioControlReceiver.prototype = {
 
     function checkInputStateOnlyWhenReceiverIsOn(callback, uri) {
       if (this.power.service.getCharacteristic(Characteristic.On).value) {
-  
+
         this.log.debug("Getting state of input from receiver since power is on!");
-  
+
         this._httpRequest(this.input.url, this.input.statusBody, function(error, response, body) {
           if (error) {
             this.log.error("getInputState() failed: %s", error.message);
@@ -515,7 +498,7 @@ SonyAudioControlReceiver.prototype = {
     function powerOnReceiverBeforeChangingInputIfNecessary(newInputState, callback, inputNumber, inputOnBody) {
       if (newInputState && !this.power.service.getCharacteristic(Characteristic.On).value) {
         this.log.debug("Powering on receiver before setting input!");
-  
+
         this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
           if (error) {
             this.log.error("setPowerState() failed: %s", error.message);
@@ -525,28 +508,20 @@ SonyAudioControlReceiver.prototype = {
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power to on");
+            this.log.debug("Waiting for device to turn on...");
             this._sleep(this.receiverPowerOnDelay);
-            for (let i = 0; i < this.inputServices.length; i++) {
-              this.log.debug("Restoring characteristics of input service " + i + " when powering on receiver while setting input!");
-              if (i != inputNumber) {
-                this.inputServices[i].getCharacteristic(Characteristic.On).getValue();
-              }
-            }
-            this.log.debug("Restoring characteristics of volume service when powering on receiver while setting input!");
-            this.volume.service.getCharacteristic(Characteristic.On).getValue();
-            this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-            setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody);
+            setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody, true);
           }
         }.bind(this));
       } else {
-        setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody);
+        setInputStateonReceiver.bind(this)(newInputState, callback, inputNumber, inputOnBody, false);
       }
-    
-      function setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody) {
+
+      function setInputStateonReceiver(newInputState, callback, inputNumber, inputOnBody, turnedOnPower) {
         this.log.debug("Setting state of input on receiver!");
-    
+
         let requestbody = newInputState ? inputOnBody : this.power.offBody;
-    
+
         this._httpRequest(this.input.url, requestbody, function(error, response, body) {
           if (error) {
             this.log.error("setInputState() failed: %s", error.message);
@@ -557,26 +532,7 @@ SonyAudioControlReceiver.prototype = {
           } else {
             newInputState ? this.log("Set input %s to on", this.inputs[inputNumber].name) : this.log.debug("Set input %s to off", this.inputs[inputNumber].name);
             callback(undefined, body);
-            for (let i = 0; i < this.inputServices.length; i++) {
-              if (i != inputNumber) {
-                this.log.debug("Also setting characteristic of input " + this.inputs[i].name + " to off when setting characteristic of input " + this.inputs[inputNumber].name);
-                this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-              }
-            }
-            if (!newInputState) {
-              this.log.debug("Setting on characteristics of power and volume service to off when powering receiver off using input service!");
-              this.power.service.getCharacteristic(Characteristic.On).updateValue(false);
-              this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
-              this.log.debug("Setting on characteristics of soundmode services to off when powering receiver off using input service!");
-              for (let i = 0; i < this.soundFieldServices.length; i++) {
-                this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-              }    
-            } else {
-              this.log.debug("Getting characteristics of stereo and surround service from receiver when changing input!");
-              for (let i = 0; i < this.soundFieldServices.length; i++) {
-                this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
-              }
-            }
+            this._refreshOnServices.bind(this)(this.inputServices[inputNumber], newInputState, turnedOnPower);
           }
         }.bind(this));
       }
@@ -589,9 +545,9 @@ SonyAudioControlReceiver.prototype = {
 
     function checkSoundFieldStateOnlyWhenReceiverIsOn(callback, value) {
       if (this.power.service.getCharacteristic(Characteristic.On).value) {
-  
+
         this.log.debug("Getting state of soundField from receiver since power is on!");
-  
+
         this._httpRequest(this.soundField.url, this.soundField.statusBody, function(error, response, body) {
           if (error) {
             this.log.error("getSoundFieldState() failed: %s", error.message);
@@ -623,7 +579,7 @@ SonyAudioControlReceiver.prototype = {
     function powerOnReceiverBeforeChangingSoundFieldIfNecessary(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody) {
       if (newSoundFieldState && !this.power.service.getCharacteristic(Characteristic.On).value) {
         this.log.debug("Powering on receiver before setting soundField!");
-  
+
         this._httpRequest(this.power.url, this.power.onBody, function(error, response, body) {
           if (error) {
             this.log.error("setPowerState() failed: %s", error.message);
@@ -633,29 +589,21 @@ SonyAudioControlReceiver.prototype = {
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power to on");
+            this.log.debug("Waiting for device to turn on...");
             this._sleep(this.receiverPowerOnDelay);
-            for (let i = 0; i < this.soundFieldServices.length; i++) {
-              this.log.debug("Restoring characteristics of soundField service " + i + " when powering on receiver while setting soundField!");
-              if (i != soundFieldNumber) {
-                this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
-              }
-            }
-            this.log.debug("Restoring characteristics of volume service when powering on receiver while setting soundField!");
-            this.volume.service.getCharacteristic(Characteristic.On).getValue();
-            this.volume.service.getCharacteristic(Characteristic.Brightness).getValue();
-            setSoundFieldStateonReceiver.bind(this)(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody);
+            setSoundFieldStateonReceiver.bind(this)(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody, true);
           }
         }.bind(this));
       } else {
-        setSoundFieldStateonReceiver.bind(this)(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody);
+        setSoundFieldStateonReceiver.bind(this)(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody, false);
       }
-    
-      function setSoundFieldStateonReceiver(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody) {
+
+      function setSoundFieldStateonReceiver(newSoundFieldState, callback, soundFieldNumber, soundFieldOnBody, turnedOnPower) {
         this.log.debug("Setting state of soundField on receiver!");
-    
+
         let requestUrl = newSoundFieldState ? this.soundField.url : this.power.url;
         let requestbody = newSoundFieldState ? soundFieldOnBody : this.power.offBody;
-    
+
         this._httpRequest(requestUrl, requestbody, function(error, response, body) {
           if (error) {
             this.log.error("setSoundFieldState() failed: %s", error.message);
@@ -666,21 +614,7 @@ SonyAudioControlReceiver.prototype = {
           } else {
             newSoundFieldState ? this.log("Set soundfield %s to on", this.soundFields[soundFieldNumber].name) : this.log.debug("Set soundfield %s to off", this.soundFields[soundFieldNumber].name);
             callback(undefined, body);
-            for (let i = 0; i < this.soundFieldServices.length; i++) {
-              if (i != soundFieldNumber) {
-                this.log.debug("Also setting characteristic of soundField " + this.soundFields[i].name + " to off when setting characteristic of soundField " + this.soundFields[soundFieldNumber].name);
-                this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-              }
-            }
-            if (!newSoundFieldState) {
-              this.log.debug("Setting on characteristics of power and volume service to off when powering receiver off using soundField service!");
-              this.power.service.getCharacteristic(Characteristic.On).updateValue(false);
-              this.volume.service.getCharacteristic(Characteristic.On).updateValue(false);
-              this.log.debug("Setting on characteristics of input services to off when powering receiver off using soundField service!");
-              for (let i = 0; i < this.inputServices.length; i++) {
-                this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-              }    
-            }
+            this._refreshOnServices.bind(this)(this.soundFieldServices[soundFieldNumber], newSoundFieldState, turnedOnPower);
           }
         }.bind(this));
       }
@@ -726,12 +660,6 @@ SonyAudioControlReceiver.prototype = {
     }.bind(this));
   },
 
-  _sleep(miliseconds) {
-    let currentTime = new Date().getTime();
-    while (currentTime + miliseconds >= new Date().getTime()) {
-    }
-  },
-
   _httpRequest(url, body, callback) {
     request({
       url: url,
@@ -743,6 +671,62 @@ SonyAudioControlReceiver.prototype = {
         callback(error, response, body);
       }
     );
+  },
+
+  _sleep(milliseconds) {
+    let currentTime = new Date().getTime();
+    while (currentTime + milliseconds >= new Date().getTime()) {}
+  },
+
+  _refreshOnServices(triggerService, triggerServiceState, turnedOnPower) {
+    if (triggerService == this.volume.service) {
+      this.log.debug("No need to update other characteristics when toggling mute while device is on");
+    } else if (triggerServiceState == false) {
+      for (let i = 0; i < this.onServices.length; i++) {
+        if (this.onServices[i] != triggerService) {
+          this.log.debug("Also turning off %s when turning off %s", this.onServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+          this.onServices[i].getCharacteristic(Characteristic.On).updateValue(false);
+        }
+      }
+    } else if (triggerService == this.power.service) {
+      for (let i = 0; i < this.onServices.length; i++) {
+        if (this.onServices[i] != triggerService) {
+          this.log.debug("Getting state of %s when turning on device", this.onServices[i].getCharacteristic(Characteristic.Name).value);
+          this.onServices[i].getCharacteristic(Characteristic.On).getValue();
+        }
+      }
+    } else if (this.inputServices.includes(triggerService)) {
+      for (let i = 0; i < this.inputServices.length; i++) {
+        if (this.inputServices[i] != triggerService) {
+          this.log.debug("Also turning off %s when switching to %s", this.inputServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+          this.inputServices[i].getCharacteristic(Characteristic.On).updateValue(false);
+        }
+      }
+      for (let i = 0; i < this.soundFieldServices.length; i++) {
+        this.log.debug("Getting state of soundfield %s when switching to %s", this.soundFieldServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+        this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
+      }
+      if (turnedOnPower == true) {
+        this.log.debug("Getting state of mute when turning on device");
+        this.volume.service.getCharacteristic(Characteristic.On).getValue();
+      }
+    } else if (this.soundFieldServices.includes(triggerService)) {
+      if (turnedOnPower == true) {
+        for (let i = 0; i < this.onServices.length; i++) {
+          if (this.onServices[i] != triggerService && this.onServices[i] != this.power.service) {
+            this.log.debug("Getting state of %s when turning on %s", this.onServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+            this.onServices[i].getCharacteristic(Characteristic.On).getValue();
+          }
+        }
+      } else {
+        for (let i = 0; i < this.soundFieldServices.length; i++) {
+          if (this.soundFieldServices[i] != triggerService) {
+            this.log.debug("Also turning off %s when switching to %s", this.soundFieldServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+            this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
+          }
+        }
+      }
+    }
   },
 
   setNetWorkStandby() {
@@ -815,27 +799,14 @@ SonyAudioControlReceiver.prototype = {
                 for (let i = 0; i < msg.params.length; i++) {
                   if (msg.params[i].uri == this.outputZone) {
                     let newPowerState;
-                    if (msg.params[i].active == "active") {
-                      newPowerState = true;
-                    } else {
-                      newPowerState = false;
-                    }
+                    newPowerState = msg.params[i].active == "active" ? true : false;
                     this.power.service.getCharacteristic(Characteristic.On).updateValue(newPowerState);
                     this.log("Updated power to " + newPowerState);
-                    if (newPowerState == true) {
+                    if (newPowerState) {
+                      this.log.debug("Waiting for device to turn on...");
                       this._sleep(this.receiverPowerOnDelay);
-                      for (let j = 0; j < this.receiverServices.length; j++) {
-                        if (this.receiverServices[j] != this.power.service && this.receiverServices[j] != this.informationService ) {
-                          this.receiverServices[j].getCharacteristic(Characteristic.On).getValue();
-                        }
-                      }
-                    } else {
-                      for (let j = 0; j < this.receiverServices.length; j++) {
-                        if (this.receiverServices[j] != this.power.service && this.receiverServices[j] != this.informationService ) {
-                          this.receiverServices[j].getCharacteristic(Characteristic.On).updateValue(false);
-                        }
-                      }
                     }
+                    this._refreshOnServices.bind(this)(this.power.service, newPowerState, newPowerState);
                   }
                 }
               } else if (msg.method == "notifyPlayingContentInfo") {
@@ -843,14 +814,9 @@ SonyAudioControlReceiver.prototype = {
                   if (msg.params[i].output == this.outputZone) {
                     for (let j = 0; j < this.inputs.length; j++) {
                       if (msg.params[i].uri == this.inputs[j].uri) {
-                        this.inputs[j].service.getCharacteristic(Characteristic.On).updateValue(true);
+                        this.inputServices[j].getCharacteristic(Characteristic.On).updateValue(true);
                         this.log("Updated input " + this.inputs[j].name + " to on");
-                        for (let i = 0; i < this.soundFieldServices.length; i++) {
-                          this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
-                        }
-                      } else {
-                        this.inputs[j].service.getCharacteristic(Characteristic.On).updateValue(false);
-                        this.log.debug("Updated input " + this.inputs[j].name + " to off");
+                        this._refreshOnServices.bind(this)(this.inputServices[j], true, false);
                       }
                     }
                   }
@@ -859,15 +825,12 @@ SonyAudioControlReceiver.prototype = {
                 for (let i = 0; i < msg.params.length; i++) {
                   if (msg.params[i].output == this.outputZone) {
                     let unmuteStatus;
-                    if (msg.params[i].mute == "off") {
-                      unmuteStatus = true;
-                    } else {
-                      unmuteStatus = false;
-                    }
+                    unmuteStatus = msg.params[i].mute == "off" ? true : false;
                     let volumeLevel = msg.params[i].volume;
                     this.volume.service.getCharacteristic(Characteristic.Brightness).updateValue(volumeLevel);
                     this.volume.service.getCharacteristic(Characteristic.On).updateValue(unmuteStatus);
                     this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
+                    this._refreshOnServices.bind(this)(this.volume.service, true, false);
                   }
                 }
               }
