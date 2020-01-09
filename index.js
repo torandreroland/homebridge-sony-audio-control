@@ -389,10 +389,7 @@ SonyAudioControlReceiver.prototype = {
             callback(new Error("setPowerState() returned http error " + response.statusCode));
           } else {
             this.log("Set power state to on");
-            this.log.debug("Waiting for device to turn on...");
-            this._sleep(this.receiverPowerOnDelay);
             callback();
-            this._refreshOnServices.bind(this)(this.volume.service, true, true);
           }
         }.bind(this));
       } else {
@@ -408,7 +405,6 @@ SonyAudioControlReceiver.prototype = {
           } else {
             this.log("Set mute to %s", newUnmuteState ? "off" : "on");
             callback(undefined, body);
-            this._refreshOnServices.bind(this)(this.volume.service, newUnmuteState, false);
           }
         }.bind(this));
       }
@@ -448,12 +444,7 @@ SonyAudioControlReceiver.prototype = {
         callback(new Error("setPowerState() returned http error " + response.statusCode));
       } else {
         this.log("Set power to %s", newPowerState ? "on" : "off");
-        if (newPowerState) {
-          this.log.debug("Waiting for device to turn on...");
-          this._sleep(this.receiverPowerOnDelay);
-        }
         callback(undefined, body);
-        this._refreshOnServices.bind(this)(this.power.service, newPowerState, newPowerState);
       }
     }.bind(this));
   },
@@ -532,7 +523,6 @@ SonyAudioControlReceiver.prototype = {
           } else {
             newInputState ? this.log("Set input %s to on", this.inputs[inputNumber].name) : this.log.debug("Set input %s to off", this.inputs[inputNumber].name);
             callback(undefined, body);
-            this._refreshOnServices.bind(this)(this.inputServices[inputNumber], newInputState, turnedOnPower);
           }
         }.bind(this));
       }
@@ -679,9 +669,7 @@ SonyAudioControlReceiver.prototype = {
   },
 
   _refreshOnServices(triggerService, triggerServiceState, turnedOnPower) {
-    if (triggerService == this.volume.service) {
-      this.log.debug("No need to update other characteristics when toggling mute while device is on");
-    } else if (triggerServiceState == false) {
+    if (triggerServiceState == false) {
       for (let i = 0; i < this.onServices.length; i++) {
         if (this.onServices[i] != triggerService) {
           this.log.debug("Also turning off %s when turning off %s", this.onServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
@@ -817,7 +805,6 @@ SonyAudioControlReceiver.prototype = {
                     this.volume.service.getCharacteristic(Characteristic.Brightness).updateValue(volumeLevel);
                     this.volume.service.getCharacteristic(Characteristic.On).updateValue(unmuteStatus);
                     this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
-                    this._refreshOnServices.bind(this)(this.volume.service, true, false);
                   }
                 }
               }
