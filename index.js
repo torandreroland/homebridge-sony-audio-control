@@ -688,10 +688,10 @@ SonyAudioControlReceiver.prototype = {
           this.onServices[i].getCharacteristic(Characteristic.On).updateValue(false);
         }
       }
-    } else if (triggerService == this.power.service) {
+    } else if (turnedOnPower == true) {
       for (let i = 0; i < this.onServices.length; i++) {
         if (this.onServices[i] != triggerService) {
-          this.log.debug("Getting state of %s when turning on device", this.onServices[i].getCharacteristic(Characteristic.Name).value);
+          this.log.debug("Getting state of %s when turning on device with %s", this.onServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
           this.onServices[i].getCharacteristic(Characteristic.On).getValue();
         }
       }
@@ -706,24 +706,11 @@ SonyAudioControlReceiver.prototype = {
         this.log.debug("Getting state of soundfield %s when switching to %s", this.soundFieldServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
         this.soundFieldServices[i].getCharacteristic(Characteristic.On).getValue();
       }
-      if (turnedOnPower == true) {
-        this.log.debug("Getting state of mute when turning on device");
-        this.volume.service.getCharacteristic(Characteristic.On).getValue();
-      }
     } else if (this.soundFieldServices.includes(triggerService)) {
-      if (turnedOnPower == true) {
-        for (let i = 0; i < this.onServices.length; i++) {
-          if (this.onServices[i] != triggerService && this.onServices[i] != this.power.service) {
-            this.log.debug("Getting state of %s when turning on %s", this.onServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
-            this.onServices[i].getCharacteristic(Characteristic.On).getValue();
-          }
-        }
-      } else {
-        for (let i = 0; i < this.soundFieldServices.length; i++) {
-          if (this.soundFieldServices[i] != triggerService) {
-            this.log.debug("Also turning off %s when switching to %s", this.soundFieldServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
-            this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
-          }
+      for (let i = 0; i < this.soundFieldServices.length; i++) {
+        if (this.soundFieldServices[i] != triggerService) {
+          this.log.debug("Also turning off soundfield %s when switching to %s", this.soundFieldServices[i].getCharacteristic(Characteristic.Name).value, triggerService.getCharacteristic(Characteristic.Name).value);
+          this.soundFieldServices[i].getCharacteristic(Characteristic.On).updateValue(false);
         }
       }
     }
