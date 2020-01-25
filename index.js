@@ -740,7 +740,35 @@ SonyAudioControlReceiver.prototype = {
     }.bind(this));
 
     client.on('connect', function(connection) {
+      function subscribe() {
+        if (connection.connected) {
+          connection.sendUTF(JSON.stringify(switchNotifications(1, [], [])));
+        }
+      }
+
+      function pollServer() {
+        if (connection.isAlive === false) {
+          this.log.error("Dropping connection on endpoing %s since server have not responded to ping", notificationWsUrl);
+          connection.drop(1002, "Server have not responded to ping");
+        } else {
+          connection.isAlive = false;
+          connection.ping(Buffer.from([]));
+          this.log.debug("Pinging server on endpoint %s", notificationWsUrl);
+          setTimeout(pollServer.bind(this), 10000);
+        }
+      }
+
       this.log.debug('WebSocket Client Connected');
+
+      connection.isAlive = true;
+      setTimeout(pollServer.bind(this), 10000);
+
+      subscribe();
+
+      connection.on('pong', function() {
+        this.log.debug("Received pong from server on endpoint %s", notificationWsUrl);
+        connection.isAlive = true;
+      }.bind(this));
 
       connection.on('error', function(error) {
         this.log("Connection Error: " + error.toString());
@@ -813,13 +841,6 @@ SonyAudioControlReceiver.prototype = {
         }
       }.bind(this));
 
-      function subscribe() {
-        if (connection.connected) {
-          connection.sendUTF(JSON.stringify(switchNotifications(1, [], [])));
-        }
-      }
-
-      subscribe();
     }.bind(this));
 
     client.connect(notificationWsUrl);
