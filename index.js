@@ -32,6 +32,7 @@ function SonyAudioControlReceiver(log, config) {
 
 SonyAudioControlReceiver.prototype = {
   receiverPowerOnDelay: 1000,
+  pollingInterval: 10000,
   outputZone: "extOutput:zone?zone=1",
   inputServices: [],
   receiverServices: [],
@@ -736,7 +737,7 @@ SonyAudioControlReceiver.prototype = {
       this.log('Connect Error: ' + error.toString());
       setTimeout(function() {
         client.connect(notificationWsUrl);
-      }, 1000);
+      }, this.pollingInterval);
     }.bind(this));
 
     client.on('connect', function(connection) {
@@ -754,14 +755,14 @@ SonyAudioControlReceiver.prototype = {
           connection.isAlive = false;
           connection.ping(Buffer.from([]));
           this.log.debug("Pinging server on endpoint %s", notificationWsUrl);
-          setTimeout(pollServer.bind(this), 10000);
+          setTimeout(pollServer.bind(this), this.pollingInterval);
         }
       }
 
       this.log('WebSocket client connected on endpoint %s', notificationWsUrl);
 
       connection.isAlive = true;
-      setTimeout(pollServer.bind(this), 10000);
+      setTimeout(pollServer.bind(this), this.pollingInterval);
 
       subscribe();
 
@@ -774,14 +775,14 @@ SonyAudioControlReceiver.prototype = {
         this.log.error("Connection error on endpoint %s : %s", notificationWsUrl, error.toString());
         setTimeout(function() {
           client.connect(notificationWsUrl);
-        }, 1000);
+        }, this.pollingInterval);
       }.bind(this));
 
       connection.on('close', function() {
         this.log('WebSocket connection closed on endpoint %s', notificationWsUrl);
         setTimeout(function() {
           client.connect(notificationWsUrl);
-        }, 1000);
+        }, this.pollingInterval);
       }.bind(this));
 
       connection.on('message', function(message) {
