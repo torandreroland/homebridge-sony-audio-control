@@ -748,7 +748,7 @@ SonyAudioControlReceiver.prototype = {
 
       function pollServer() {
         if (connection.isAlive === false) {
-          this.log.error("Dropping connection on endpoing %s since server have not responded to ping", notificationWsUrl);
+          this.log.error("Dropping connection on endpoint %s since server have not responded to ping", notificationWsUrl);
           connection.drop(1002, "Server have not responded to ping");
         } else {
           connection.isAlive = false;
@@ -758,7 +758,7 @@ SonyAudioControlReceiver.prototype = {
         }
       }
 
-      this.log.debug('WebSocket Client Connected');
+      this.log('WebSocket client connected on endpoint %s', notificationWsUrl);
 
       connection.isAlive = true;
       setTimeout(pollServer.bind(this), 10000);
@@ -771,14 +771,14 @@ SonyAudioControlReceiver.prototype = {
       }.bind(this));
 
       connection.on('error', function(error) {
-        this.log("Connection Error: " + error.toString());
+        this.log.error("Connection error on endpoint %s : %s", notificationWsUrl, error.toString());
         setTimeout(function() {
           client.connect(notificationWsUrl);
         }, 1000);
       }.bind(this));
 
       connection.on('close', function() {
-        this.log('WebSocket Connection Closed');
+        this.log('WebSocket connection closed on endpoint %s', notificationWsUrl);
         setTimeout(function() {
           client.connect(notificationWsUrl);
         }, 1000);
