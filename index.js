@@ -16,6 +16,7 @@ function SonyAudioControlReceiver(log, config) {
   this.inputs = config.inputs;
   this.baseHttpUrl = "http://" + config.ip + ":10000";
   this.baseWsUrl = "ws://" + config.ip + ":10000";
+  this.HttpUrlIrcc = "http://" + config.ip + ":52323/upnp/control/IRCC";
   this.volume.volumeUrl = this.baseHttpUrl + "/sony/audio";
   this.volume.muteUrl = this.baseHttpUrl + "/sony/audio";
   this.input.url = this.baseHttpUrl + "/sony/avContent";
@@ -216,6 +217,22 @@ SonyAudioControlReceiver.prototype = {
     }
   },
 
+  ircc: {
+    get body() {
+      return JSON.stringify({
+        "method": "setPowerSettings",
+        "id": 127,
+        "params": [{
+          "settings": [{
+            "target": "quickStartMode",
+            "value": "on"
+          }]
+        }],
+        "version": "1.0"
+      })
+    }
+  },
+
   identify(callback) {
     this.log("Identify requested!");
     callback();
@@ -327,6 +344,18 @@ SonyAudioControlReceiver.prototype = {
 
     receiverServices = receiverServices.concat(soundFieldServices);
     this.soundFieldServices = soundFieldServices;
+
+    TelevisionService
+    .getCharacteristic(Characteristic.RemoteKey)
+    .on('set', function(newValue, callback) {
+      debug("setRemoteKey: ", that.zone, newValue); //TODO Debug
+        let irccCode = util.mapKeyToControl(newValue);
+        if (irccCode) {
+          debug("command", that.zone, newValue, option, this.pausePlay); //TODO Debug
+        }
+      }
+      callback(null);
+    }.bind(this));
 
     this.receiverServices = receiverServices;
 
