@@ -37,8 +37,8 @@
                         "name": {
                             "title": "Name",
                             "type": "string",
-                            "default": "TV",
-                            "placeholder": "TV",
+                            "default": "Input TV",
+                            "placeholder": "Input TV",
                             "required": true
                         },
                         "uri": {
@@ -49,6 +49,31 @@
                             "placeholder": "extInput:sat-catv",
                             "required": true,
                             "description": "See link in header for URIs"
+                        }
+                    }
+                }
+            },
+            "soundFields": {
+                "title": "Soundfields",
+                "type": "array",
+                "required": false,
+                "items": {
+                    "title": "Soundfield",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "title": "Name",
+                            "type": "string",
+                            "default": "Stereo Mode",
+                            "placeholder": "Stereo Mode",
+                            "required": true
+                        },
+                        "value": {
+                            "title": "Value",
+                            "type": "string",
+                            "default": "2chStereo",
+                            "placeholder": "2chStereo",
+                            "required": true
                         }
                     }
                 }
@@ -77,6 +102,21 @@
                 },
                 {
                     "key": "inputs[].uri"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "title": "Soundfields",
+            "expandable": true,
+            "expanded": false,
+            "key": "soundFields",
+            "items": [
+                {
+                    "key": "soundFields[].name"
+                },
+                {
+                    "key": "soundFields[].value"
                 }
             ]
         }

@@ -27,7 +27,9 @@ Set "name" to what you prefer to refer to the device as using Homekit or Siri.
 
 To disable network standby, set enableNetworkStandby to false (not recommended as you can't turn on receiver again through a network connection, but it significantly lowers power consumption while off).
 
-For every external input you want to enable, you have to add a new input object with a "name" and "uri". Again "name" can be set to what you prefer to refer to the input as using Homekit or Siri, while "uri" have to correspond to the Device Resource URI per [Device URI](https://developer.sony.com/develop/audio-control-api/api-references/device-uri).  
+For every external input you want to enable, you have to add a new input object with a "name" and "uri". Again "name" can be set to what you prefer to refer to the input as using Homekit or Siri, while "uri" have to correspond to the Device Resource URI per [Device URI](https://developer.sony.com/develop/audio-control-api/api-references/device-uri).
+
+For every soundfield you want to enable, you can add a new soundfield object with a "name" and "value". Again "name" can be set to what you prefer to refer to the soundfield as using Homekit or Siri, while "value" have to correspond with the soundField coding of the Sony equipment. If you omit the soundField array entirely, default soundfields for 2 channel stereo and Dolby Surroind will be created. If you don't want any soundfields to be created, included an empty array (ie. "soundFields": []).
 
     "accessories": [
         {
@@ -37,29 +39,39 @@ For every external input you want to enable, you have to add a new input object 
             "enableNetworkStandby": true,
             "inputs": [
               {
-                "name": "Apple TV",
+                "name": "Input Apple TV",
                 "uri": "extInput:video?port=2"
               },
               {
-                "name": "TV",
+                "name": "Input TV",
                 "uri": "extInput:sat-catv"
               },
               {
-                "name": "Blu-ray",
+                "name": "Input Blu-ray",
                 "uri": "extInput:bd-dvd"
               },
               {
-                "name": "Xbox One",
+                "name": "Input Xbox One",
                 "uri": "extInput:game"
               },
               {
-                "name": "Bluesound",
+                "name": "Input Bluesound",
                 "uri": "extInput:tv"
               },
               {
-                "name": "Vinyl",
+                "name": "Input Vinyl",
                 "uri": "extInput:sacd-cd"
               }
+            ],
+            "soundFields": [
+                {
+                    "name": "Stereo Mode",
+                    "value": "2chStereo"
+                },
+                {
+                    "name": "Surround Mode",
+                    "value": "dolbySurround"
+                }
             ]
         }
     ]

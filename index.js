@@ -14,6 +14,16 @@ function SonyAudioControlReceiver(log, config) {
   this.log = log;
   this.name = config.name;
   this.inputs = config.inputs;
+  this.soundFields = config.soundFields || [
+    {
+      "name": "Surround Mode",
+      "value": "dolbySurround"
+    },
+    {
+      "name": "Stereo Mode",
+      "value": "2chStereo"
+    }
+  ];
   this.baseHttpUrl = "http://" + config.ip + ":10000";
   this.baseWsUrl = "ws://" + config.ip + ":10000";
   this.volume.volumeUrl = this.baseHttpUrl + "/sony/audio";
@@ -37,16 +47,6 @@ SonyAudioControlReceiver.prototype = {
   inputServices: [],
   receiverServices: [],
   onServices: [],
-  soundFields: [
-    {
-      "name": "Surround Mode",
-      "value": "dolbySurround"
-    },
-    {
-      "name": "Stereo Mode",
-      "value": "2chStereo"
-    }
-  ],
 
   volume: {
     get volumeStatusBody() {
@@ -239,7 +239,7 @@ SonyAudioControlReceiver.prototype = {
     receiverServices.push(informationService);
 
     this.log("Creating volume service!");
-    var volumeService = new Service.Lightbulb(this.name);
+    var volumeService = new Service.Lightbulb(this.name + " Volume");
 
     this.log.debug("... configuring mute characteristic");
     volumeService
@@ -286,7 +286,7 @@ SonyAudioControlReceiver.prototype = {
       let setInputFunction = new Function('newInputState', 'callback', inputSetFunctionBody);
       this.inputs[i].setInputState = setInputFunction.bind(this);
 
-      var inputService = new Service.Switch("Input " + this.inputs[i].name, this.inputs[i].name);
+      var inputService = new Service.Switch(this.inputs[i].name, this.inputs[i].name);
 
       this.log.debug("... configuring input characteristic");
       inputService
