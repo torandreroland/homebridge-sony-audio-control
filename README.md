@@ -23,6 +23,8 @@ You have to edit "ip" to correspond with the IP-address of your receiver.
 
 Set "name" to what you prefer to refer to the device as using Homekit or Siri.
 
+Set "outputZone" to the zone you want to control (omit if your device does not support zone control).
+
 "accessory" is used by homebridge to initialize the plugin correctly, so do NOT edit this setting.
 
 To disable network standby, set enableNetworkStandby to false (not recommended as you can't turn on receiver again through a network connection, but it significantly lowers power consumption while off).
@@ -36,6 +38,7 @@ For every soundfield you want to enable, you can add a new soundfield object wit
             "accessory": "receiver",
             "name": "Receiver",
             "ip": "10.0.0.138",
+            "outputZone": "extOutput:zone?zone=1",
             "enableNetworkStandby": true,
             "inputs": [
               {

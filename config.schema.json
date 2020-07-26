@@ -19,6 +19,20 @@
                 "required": true,
                 "description": "The IP address of the device"
             },
+            "outputZone": {
+                "title": "Output zone",
+                "type": "string",
+                "default": "extOutput:zone?zone=1",
+                "required": false,
+                "typeahead": {
+                    "source": [
+                      "extOutput:zone?zone=1",
+                      "extOutput:zone?zone=2",
+                      "extOutput:zone?zone=4"
+                    ]
+                },
+                "description": "The output zone to control"
+            },
             "enableNetworkStandby": {
                 "title": "Enable Network Standby",
                 "type": "boolean",
@@ -86,6 +100,9 @@
         },
         {
             "key": "ip"
+        },
+        {
+            "key": "outputZone"
         },
         {
             "key": "enableNetworkStandby"

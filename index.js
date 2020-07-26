@@ -11,8 +11,12 @@ module.exports = function(homebridge) {
 };
 
 function SonyAudioControlReceiver(log, config) {
+  var baseHttpUrl = "http://" + config.ip + ":10000";
+  var outputZone = (config.outputZone === undefined) ? "" : config.outputZone;
+
   this.log = log;
   this.name = config.name;
+  this.outputZone = outputZone
   this.inputs = config.inputs;
   this.soundFields = config.soundFields || [
     {
@@ -24,37 +28,19 @@ function SonyAudioControlReceiver(log, config) {
       "value": "2chStereo"
     }
   ];
-  this.baseHttpUrl = "http://" + config.ip + ":10000";
   this.baseWsUrl = "ws://" + config.ip + ":10000";
-  this.volume.volumeUrl = this.baseHttpUrl + "/sony/audio";
-  this.volume.muteUrl = this.baseHttpUrl + "/sony/audio";
-  this.input.url = this.baseHttpUrl + "/sony/avContent";
-  this.power.url = this.baseHttpUrl + "/sony/avContent";
-  this.soundField.url = this.baseHttpUrl + "/sony/audio";
-  this.networkStandby.url = this.baseHttpUrl + "/sony/system";
+  this.networkStandby.url = baseHttpUrl + "/sony/system";
   this.networkStandby.enableNetworkStandby = config.enableNetworkStandby === false ? false : true;
   this.audioWsUrl = this.baseWsUrl + "/sony/audio";
   this.avContentWsUrl = this.baseWsUrl + "/sony/avContent";
-  this.setNetWorkStandby();
-  this.getNotifications(this.audioWsUrl);
-  this.getNotifications(this.avContentWsUrl);
-}
 
-SonyAudioControlReceiver.prototype = {
-  receiverPowerOnDelay: 1000,
-  pollingInterval: 10000,
-  outputZone: "extOutput:zone?zone=1",
-  inputServices: [],
-  receiverServices: [],
-  onServices: [],
-
-  volume: {
+  this.volume = {
     get volumeStatusBody() {
       return JSON.stringify({
         "method": "getVolumeInformation",
         "id": 127,
         "params": [{
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.1"
       })
@@ -65,7 +51,7 @@ SonyAudioControlReceiver.prototype = {
         "id": 127,
         "params": [{
           "volume": "%s",
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.1"
       })
@@ -75,7 +61,7 @@ SonyAudioControlReceiver.prototype = {
         "method": "getVolumeInformation",
         "id": 127,
         "params": [{
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.1"
       })
@@ -86,7 +72,7 @@ SonyAudioControlReceiver.prototype = {
         "id": 127,
         "params": [{
           "mute": "on",
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.1"
       })
@@ -97,20 +83,22 @@ SonyAudioControlReceiver.prototype = {
         "id": 127,
         "params": [{
           "mute": "off",
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.1"
       })
-    }
-  },
+    },
+    "volumeUrl": baseHttpUrl + "/sony/audio",
+    "muteUrl": baseHttpUrl + "/sony/audio"
+  };
 
-  input: {
+  this.input = {
     get statusBody() {
       return JSON.stringify({
         "method": "getPlayingContentInfo",
         "id": 127,
         "params": [{
-          "output": "extOutput:zone?zone=1"
+          "output": outputZone
         }],
         "version": "1.2"
       })
@@ -120,15 +108,16 @@ SonyAudioControlReceiver.prototype = {
         "method": "setPlayContent",
         "id": 127,
         "params": [{
-          "output": "extOutput:zone?zone=1",
+          "output": outputZone,
           "uri": "%s"
         }],
         "version": "1.2"
       })
-    }
-  },
+    },
+    url: baseHttpUrl + "/sony/avContent"
+  };
 
-  soundField: {
+  this.soundField = {
     get statusBody() {
       return JSON.stringify({
         "method": "getSoundSettings",
@@ -151,10 +140,11 @@ SonyAudioControlReceiver.prototype = {
         }],
         "version": "1.1"
       })
-    }
-  },
+    },
+    url: baseHttpUrl + "/sony/audio"
+  };
 
-  power: {
+  this.power = {
     get statusBody() {
       return JSON.stringify({
         "method": "getCurrentExternalTerminalsStatus",
@@ -169,7 +159,7 @@ SonyAudioControlReceiver.prototype = {
         "id": 127,
         "params": [{
           "active": "active",
-          "uri": "extOutput:zone?zone=1"
+          "uri": outputZone
         }],
         "version": "1.0"
       })
@@ -180,12 +170,25 @@ SonyAudioControlReceiver.prototype = {
         "id": 127,
         "params": [{
           "active": "inactive",
-          "uri": "extOutput:zone?zone=1"
+          "uri": outputZone
         }],
         "version": "1.0"
       })
-    }
-  },
+    },
+    url: baseHttpUrl + "/sony/avContent"
+  };
+
+  this.setNetWorkStandby();
+  this.getNotifications(this.audioWsUrl);
+  this.getNotifications(this.avContentWsUrl);
+}
+
+SonyAudioControlReceiver.prototype = {
+  receiverPowerOnDelay: 1000,
+  pollingInterval: 10000,
+  inputServices: [],
+  receiverServices: [],
+  onServices: [],
 
   networkStandby: {
     get onBody() {
