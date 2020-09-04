@@ -1,8 +1,9 @@
 {
   "name": "homebridge-sony-audio-control",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "license": "ISC",
   "description": "Homebridge plugin to control a Sony STR-DN1080 AV-receiver",
+  "main": "src/index.js",
   "keywords": [
     "homebridge-plugin"
   ],
@@ -11,21 +12,17 @@
     "homebridge": ">=0.2.0"
   },
   "author": {
-    "name": "Andi and Tor André Roland"
+    "name": "Andi, Tor André Roland and Maxi Herczegh"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:torandreroland/homebridge-sony-audio-control.git"
   },
   "dependencies": {
-    "np": "^5.2.1",
-    "npm": "^5.8.0",
-    "request": "^2.65.0",
+    "node-fetch": "^2.6.0",
     "websocket": "^1.0.28"
   },
   "devDependencies": {
-    "chai": "^3.4.1",
-    "chai-things": "^0.2.0",
-    "hap-nodejs": "0.4.27"
+    "eslint": "^7.8.0"
   }
 }
