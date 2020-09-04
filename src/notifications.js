@@ -19,7 +19,7 @@ class Notifications {
       "notifyVolumeInformation": this.notifyVolumeInformation.bind(this)
     };
 
-    this.client = new WebSocketClient(); 
+    this.client = new WebSocketClient({keepalive: true, keepaliveInterval: this.pollingInterval}); 
 
     this.client.on('connectFailed', error => {
       this.log('Connect Error: ' + error.toString());
@@ -32,14 +32,10 @@ class Notifications {
 
       this.connection = connection;
 
-      connection.isAlive = true;
-      setTimeout(this.keepalive.bind(this), this.pollingInterval);
-
       this.switchNotifications(1, [], []);
 
       connection.on('pong', () => {
         this.log.debug("Received pong from server on endpoint %s", this.lib);
-        connection.isAlive = true;
       });
 
       connection.on('error', error => {
@@ -83,18 +79,6 @@ class Notifications {
     });
 
     this.client.connect(this.url);
-  }
-
-  keepalive() {
-    if (!this.connection.isAlive) {
-      this.log.error("Dropping connection on endpoint %s since server has not responded to ping", this.url);
-      this.connection.drop(1002, "Server has not responded to ping");
-    } else {
-      this.connection.isAlive = false;
-      this.connection.ping(Buffer.from([]));
-      this.log.debug("Pinging server on endpoint %s", this.url);
-      setTimeout(this.keepalive.bind(this), this.pollingInterval);
-    }
   }
 
   switchNotifications(id, disable, enable) {
