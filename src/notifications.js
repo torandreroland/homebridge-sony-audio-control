@@ -65,8 +65,10 @@ class Notifications {
               disable.push(notification);
             }
           }
-
-          this.switchNotifications(127, disable, enable);
+          
+          // the empty check is required because [] apparently means "every notification" and disable takes precedence
+          // so the "audio" endpoint with only one available notification would not work without it
+          this.switchNotifications(127, disable.length == 0 ? null : disable, enable.length == 0 ? null : enable);
         } else {
           this.log.debug("Received: '" + message.utf8Data + "'");
           if (msg.method == null || !notificationHandlers.hasOwnProperty(msg.method)) return;
