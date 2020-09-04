@@ -25,7 +25,7 @@ class SonyAudioControlReceiver {
     this.api = new API(config.ip, log, outputZone);
     this.name = config.name;
     this.outputZone = outputZone;
-    this.inputs = config.inputs;
+    this.inputs = config.inputs || [];
     this.soundFields = config.soundFields || [
       {
         "name": "Surround Mode",
