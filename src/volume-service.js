@@ -2,6 +2,7 @@ class VolumeService {
   constructor(serviceParams) {
     this.api = serviceParams.api;
     this.log = serviceParams.log;
+    this.lastChanges = serviceParams.lastChanges;
 
     this.hapService = new serviceParams.Service.Lightbulb(`${serviceParams.accessoryName} Volume`);
 
@@ -100,6 +101,7 @@ class VolumeService {
 
   async setVolume(newVolumeState, callback) {
     try {
+      this.lastChanges.volume = Date.now();
       await this.api.request("audio", "setAudioVolume", [{
         "volume": newVolumeState.toString(),
         "output": this.outputZone

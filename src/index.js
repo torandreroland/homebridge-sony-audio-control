@@ -41,6 +41,8 @@ class SonyAudioControlReceiver {
 
     this.pollingInterval = 10000;
 
+    this.lastChanges = { volume: new Date(0) };
+
     this.services = {
       volumeService: null,
       powerService: null,
@@ -84,6 +86,7 @@ class SonyAudioControlReceiver {
       log: this.log,
       outputZone: this.outputZone,
       accessoryName: this.name,
+      lastChanges: this.lastChanges,
       Service: Service,
       Characteristic: Characteristic
     };
@@ -123,6 +126,7 @@ class SonyAudioControlReceiver {
       outputZone: this.outputZone,
       services: this.services,
       hapServices: this.hapServices,
+      lastChanges: this.lastChanges,
       Service: Service,
       Characteristic: Characteristic
     };

@@ -5,6 +5,7 @@ class Notifications {
   constructor(notificationParams, lib) {
     this.url = `ws://${notificationParams.ip}:10000/sony/${lib}`;
     this.lib = lib;
+    this.lastChanges = notificationParams.lastChanges;
     this.log = notificationParams.log;
     this.pollingInterval = notificationParams.pollingInterval;
     this.outputZone = notificationParams.outputZone;
@@ -142,7 +143,7 @@ class Notifications {
       this.log.debug("Skipped unknown input update notification: %s", param.uri);
       return;
     }
-    
+
     inputService.hapService.getCharacteristic(this.Characteristic.On).updateValue(true);
     this.log("Updated input %s to on", inputService.name);
 
@@ -158,6 +159,11 @@ class Notifications {
   }
 
   notifyVolumeInformation(msg) {
+    if (Date.now() - this.lastChanges.volume < 1000) {
+      this.log.debug("Skipped notifyVolumeInformation because of a recent change using HomeKit");
+      return;
+    }
+
     const param = this.outputZone ? msg.params.find(param => param.output === this.outputZone) : msg.params[0];
     if (param == null) {
       this.log.debug("No notifyVolumeInformation parameter matches the configured output zone!");
