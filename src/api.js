@@ -31,17 +31,29 @@ class API {
   }
 
   async getPowerState() {
-    const powerResponse = await this.request("avContent", "getCurrentExternalTerminalsStatus", [], "1.0");
-    return powerResponse
+    if (this.outputZone) {
+      const powerResponse = await this.request("avContent", "getCurrentExternalTerminalsStatus", [], "1.0");
+      return powerResponse
       .filter(terminal => terminal.outputs && terminal.outputs.includes(this.outputZone))
       .some(terminal => terminal.active === "active");
+    } else {
+      const powerResponse = await this.request("system", "getPowerStatus", [], "1.1");
+      return powerResponse.status === "active";
+    }
   }
 
   async setPowerState(newPowerState) {
-    await this.request("avContent", "setActiveTerminal", [{
-      "active": newPowerState ? "active" : "inactive",
-      "uri": this.outputZone
-    }], "1.0");
+    if (this.outputZone) {
+      await this.request("avContent", "setActiveTerminal", [{
+        "active": newPowerState ? "active" : "inactive",
+        "uri": this.outputZone
+      }], "1.0");
+    } else {
+      await this.request("system", "setPowerStatus", [{
+        "status": newPowerState ? "active" : "off"
+      }], "1.1");
+    }
+
   }
 
   sleep(ms = 1000) {

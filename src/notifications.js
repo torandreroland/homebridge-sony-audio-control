@@ -102,7 +102,7 @@ class Notifications {
   }
 
   notifyExternalTerminalStatus(msg) {
-    const extTerminal = msg.params.find(param => param.uri === this.outputZone); 
+    const extTerminal = msg.params.find(param => param.uri === (this.outputZone ? this.outputZone : "extOutput:zone?zone=1")); 
     if (extTerminal == null) {
       this.log.debug("No notifyExternalTerminalStatus parameter matches the configured output zone!");
       return;
@@ -131,7 +131,7 @@ class Notifications {
   }
 
   notifyPlayingContentInfo(msg) {
-    const param = msg.params.find(param => param.output === this.outputZone);
+    const param = this.outputZone ? msg.params.find(param => param.output === this.outputZone) : msg.params[0];
     if (param == null) {
       this.log.debug("No notifyPlayingContentInfo parameter matches the configured output zone!");
       return;
@@ -154,7 +154,7 @@ class Notifications {
   }
 
   notifyVolumeInformation(msg) {
-    const param = msg.params.find(param => param.output === this.outputZone);
+    const param = this.outputZone ? msg.params.find(param => param.output === this.outputZone) : msg.params[0];
     if (param == null) {
       this.log.debug("No notifyVolumeInformation parameter matches the configured output zone!");
       return;
