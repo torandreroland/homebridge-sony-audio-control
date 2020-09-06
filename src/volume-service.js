@@ -1,8 +1,9 @@
 class VolumeService {
-  constructor(serviceParams) {
+  constructor(serviceParams, maxVolume) {
     this.api = serviceParams.api;
     this.log = serviceParams.log;
     this.lastChanges = serviceParams.lastChanges;
+    this.maxVolume = maxVolume;
 
     this.hapService = new serviceParams.Service.Lightbulb(`${serviceParams.accessoryName} Volume`);
 
@@ -90,9 +91,10 @@ class VolumeService {
 
     try {
       const info = await this.getVolumeInformation();
+      const volume = Math.round(info.volume / this.maxVolume * 100);
 
-      this.log.debug("Speaker's volume is at %s %", info.volume);
-      callback(null, info.volume);
+      this.log.debug("Speaker's volume is at %s %", volume);
+      callback(null, volume);
     } catch (error) {
       this.log.error("getVolume() failed: %s", error.message);
       callback(error);
@@ -102,12 +104,14 @@ class VolumeService {
   async setVolume(newVolumeState, callback) {
     try {
       this.lastChanges.volume = Date.now();
+
+      const volume = Math.round(newVolumeState / 100 * this.maxVolume);
       await this.api.request("audio", "setAudioVolume", [{
-        "volume": newVolumeState.toString(),
+        "volume": volume.toString(),
         "output": this.outputZone
       }], "1.1");
 
-      this.log("Set volume to %s", newVolumeState);
+      this.log("Set volume to %s", volume);
       callback(null);
     } catch (error) {
       this.log.error("setVolume() failed: %s", error.message);

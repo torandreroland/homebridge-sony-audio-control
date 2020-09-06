@@ -37,6 +37,7 @@ class SonyAudioControlReceiver {
       }
     ];
     this.ip = config.ip;
+    this.maxVolume = config.maxVolume || 100;
     this.enableNetworkStandby = config.enableNetworkStandby === false ? false : true;
 
     this.pollingInterval = 10000;
@@ -92,7 +93,7 @@ class SonyAudioControlReceiver {
     };
 
     this.log("Creating volume service!");
-    const volumeService = new VolumeService(serviceParams);
+    const volumeService = new VolumeService(serviceParams, this.maxVolume);
     this.services.volumeService = volumeService;
     this.hapServices.volumeService = volumeService.hapService;
 
