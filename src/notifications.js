@@ -138,13 +138,17 @@ class Notifications {
     }
     
     const inputService = this.services.inputServices.find(service => service.uri === param.uri);
+    if (inputService == null) {
+      this.log.debug("Skipped unknown input update notification: %s", param.uri);
+      return;
+    }
     
     inputService.hapService.getCharacteristic(this.Characteristic.On).updateValue(true);
     this.log("Updated input %s to on", inputService.name);
 
     for (const service of this.hapServices.inputServices) {
       if (service === inputService.hapService) continue;
-      this.log.debug("Also turning off %s when switching to %s", this.getServiceName(inputService), inputService.name);
+      this.log.debug("Also turning off %s when switching to %s", this.getServiceName(service), inputService.name);
       service.getCharacteristic(this.Characteristic.On).updateValue(false);
     }
     for (const service of this.hapServices.soundFieldServices) {
