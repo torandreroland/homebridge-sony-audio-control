@@ -32,16 +32,18 @@ class API {
 
   async getPowerState() {
     const powerResponse = await this.request("avContent", "getCurrentExternalTerminalsStatus", [], "1.0");
-    return powerResponse[0].active === "active";
+    return powerResponse
+      .filter(terminal => terminal.outputs && terminal.outputs.includes(this.outputZone))
+      .some(terminal => terminal.active === "active");
   }
-  
+
   async setPowerState(newPowerState) {
     await this.request("avContent", "setActiveTerminal", [{
       "active": newPowerState ? "active" : "inactive",
       "uri": this.outputZone
     }], "1.0");
   }
-  
+
   sleep(ms = 1000) {
     return new Promise(resolve => {
       setTimeout(resolve, ms);
