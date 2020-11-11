@@ -3,6 +3,9 @@ class SoundFieldService {
     this.api = serviceParams.api;
     this.log = serviceParams.log;
     this.outputZone = serviceParams.outputZone;
+    this.soundFieldServices = serviceParams.soundFieldServices;
+    this.Characteristic = serviceParams.Characteristic;
+
 
     this.name = soundFieldName;
     this.value = soundFieldValue;
@@ -86,6 +89,12 @@ class SoundFieldService {
         }], "1.1");
 
         this.log("Set soundField %s to on", this.name);
+
+        for (const soundFieldService of this.soundFieldServices) {
+          if (soundFieldService === this.hapService) continue;
+          this.log.debug("Also turning off %s when switching soundfield", soundFieldService.getCharacteristic(this.Characteristic.Name).value);
+          soundFieldService.getCharacteristic(this.Characteristic.On).updateValue(false);
+        }
       } else {
         await this.api.setPowerState(false);
 

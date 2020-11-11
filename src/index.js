@@ -89,7 +89,8 @@ class SonyAudioControlReceiver {
       accessoryName: this.name,
       lastChanges: this.lastChanges,
       Service: Service,
-      Characteristic: Characteristic
+      Characteristic: Characteristic,
+      soundFieldServices: this.hapServices.soundFieldServices
     };
 
     this.log("Creating volume service!");
@@ -102,7 +103,6 @@ class SonyAudioControlReceiver {
     this.services.powerService = powerService;
     this.hapServices.powerService = powerService.hapService;
 
-    this.services.inputServices = [];
     for (const { name, uri } of this.inputs) {
       this.log("Creating input service %s!", name);
       const inputService = new InputService(serviceParams, name, uri);
@@ -110,7 +110,6 @@ class SonyAudioControlReceiver {
       this.hapServices.inputServices.push(inputService.hapService);
     }
 
-    this.services.soundFieldServices = [];
     for (const { name, value } of this.soundFields) {
       this.log("Creating soundfield service %s!", name);
       const soundFieldService = new SoundFieldService(serviceParams, name, value);
