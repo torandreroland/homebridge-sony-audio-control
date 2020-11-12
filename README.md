@@ -23,6 +23,8 @@ You have to edit "ip" to correspond with the IP-address of your receiver.
 
 Set "name" to what you prefer to refer to the device as using Homekit or Siri.
 
+Set "maxVolume" in correspondance with max volume of the device. This is used to calculate the volume percentage. If you omit maxVolume, a default value of 100 will be used.
+
 Set "outputZone" to the zone you want to control (omit if your device does not support zone control).
 
 "accessory" is used by homebridge to initialize the plugin correctly, so do NOT edit this setting.
@@ -38,6 +40,7 @@ For every soundfield you want to enable, you can add a new soundfield object wit
             "accessory": "receiver",
             "name": "Receiver",
             "ip": "10.0.0.138",
+            "maxVolume": 100,
             "outputZone": "extOutput:zone?zone=1",
             "enableNetworkStandby": true,
             "inputs": [

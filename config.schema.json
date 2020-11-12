@@ -19,6 +19,13 @@
                 "required": true,
                 "description": "The IP address of the device"
             },
+            "maxVolume": {
+                "title": "Max volume",
+                "type": "number",
+                "required": false,
+                "placeholder": 100,
+                "description": "Max volume of the device (used to calculate volume percentage)"
+            },
             "outputZone": {
                 "title": "Output zone",
                 "type": "string",
@@ -100,6 +107,9 @@
         },
         {
             "key": "ip"
+        },
+        {
+            "key": "maxVolume"
         },
         {
             "key": "outputZone"
