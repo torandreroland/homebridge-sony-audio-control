@@ -103,7 +103,7 @@ class Notifications {
   }
 
   notifyExternalTerminalStatus(msg) {
-    const extTerminal = msg.params.find(param => param.uri === (this.outputZone ? this.outputZone : "extOutput:zone?zone=1")); 
+    const extTerminal = this.outputZone ? msg.params.find(param => param.uri === this.outputZone) : msg.params[0];
     if (extTerminal == null) {
       this.log.debug("No notifyExternalTerminalStatus parameter matches the configured output zone!");
       return;
