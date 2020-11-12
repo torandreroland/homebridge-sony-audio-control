@@ -2,6 +2,7 @@ class VolumeService {
   constructor(serviceParams, maxVolume) {
     this.api = serviceParams.api;
     this.log = serviceParams.log;
+    this.outputZone = serviceParams.outputZone;
     this.lastChanges = serviceParams.lastChanges;
     this.maxVolume = maxVolume;
 
