@@ -34,7 +34,7 @@ class API {
     if (this.outputZone) {
       const powerResponse = await this.request("avContent", "getCurrentExternalTerminalsStatus", [], "1.0");
       return powerResponse
-      .filter(terminal => terminal.uri && terminal.uri === this.outputZone)
+      .filter(terminal => terminal.uri === this.outputZone)
       .some(terminal => terminal.active === "active");
     } else {
       const powerResponse = await this.request("system", "getPowerStatus", [], "1.1");
