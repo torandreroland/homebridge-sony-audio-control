@@ -24,7 +24,6 @@ class Notifications {
 
     this.client.on('connectFailed', error => {
       this.log('Connect Error: ' + error.toString());
-      setTimeout(() => this.client.connect(this.url), this.pollingInterval);
     });
 
     this.client.on('connect', connection => {
