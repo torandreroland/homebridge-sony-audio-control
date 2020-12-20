@@ -116,6 +116,9 @@
             "key": "ip"
         },
         {
+            "key": "port"
+        },
+        {
             "key": "maxVolume"
         },
         {
