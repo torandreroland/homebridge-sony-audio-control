@@ -3,7 +3,7 @@ const WebSocketClient = require('websocket').client;
 
 class Notifications {
   constructor(notificationParams, lib) {
-    this.url = `ws://${notificationParams.ip}:10000/sony/${lib}`;
+    this.url = `ws://${notificationParams.ip}:${notificationParams.port}/sony/${lib}`;
     this.lib = lib;
     this.lastChanges = notificationParams.lastChanges;
     this.log = notificationParams.log;

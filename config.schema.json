@@ -19,6 +19,13 @@
                 "required": true,
                 "description": "The IP address of the device"
             },
+            "port": {
+                "title": "Port",
+                "type": "number",
+                "required": false,
+                "placeholder": 10000,
+                "description": "Port number of the device"
+            },
             "maxVolume": {
                 "title": "Max volume",
                 "type": "number",

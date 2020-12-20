@@ -2,8 +2,8 @@ const fetch = require("node-fetch");
 
 
 class API {
-  constructor(ip, log, outputZone) {
-    this.baseURL = `http://${ip}:10000/sony/`;
+  constructor(ip, port, log, outputZone) {
+    this.baseURL = `http://${ip}:${port}/sony/`;
     this.log = log;
     this.outputZone = outputZone;
   }

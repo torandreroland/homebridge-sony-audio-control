@@ -22,7 +22,6 @@ class SonyAudioControlReceiver {
     var outputZone = (config.outputZone === undefined) ? "" : config.outputZone;
 
     this.log = log;
-    this.api = new API(config.ip, log, outputZone);
     this.name = config.name;
     this.outputZone = outputZone;
     this.inputs = config.inputs || [];
@@ -37,6 +36,8 @@ class SonyAudioControlReceiver {
       }
     ];
     this.ip = config.ip;
+    this.port = config.port || 10000;
+    this.api = new API(this.ip, this.port, log, outputZone);
     this.maxVolume = config.maxVolume || 100;
     this.enableNetworkStandby = config.enableNetworkStandby === false ? false : true;
 
@@ -121,6 +122,7 @@ class SonyAudioControlReceiver {
     
     const notificationParams = {
       ip: this.ip,
+      port: this.port,
       log: this.log,
       pollingInterval: this.pollingInterval,
       outputZone: this.outputZone,

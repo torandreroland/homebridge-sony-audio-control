@@ -21,6 +21,8 @@ Below is an example configuration that has to amended to your existing Homebridg
 
 You have to edit "ip" to correspond with the IP-address of your receiver.
 
+Set "port" in correspondance with the device. If you omit port, a default value of 10000 will be used. 
+
 Set "name" to what you prefer to refer to the device as using Homekit or Siri.
 
 Set "maxVolume" in correspondance with max volume of the device. This is used to calculate the volume percentage. If you omit maxVolume, a default value of 100 will be used.
@@ -41,6 +43,7 @@ For every soundfield you want to enable, you can add a new soundfield object wit
             "name": "Receiver",
             "ip": "10.0.0.138",
             "maxVolume": 100,
+            "port": 10000,
             "outputZone": "extOutput:zone?zone=1",
             "enableNetworkStandby": true,
             "inputs": [
