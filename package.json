@@ -1,6 +1,6 @@
 {
   "name": "homebridge-sony-audio-control",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "license": "ISC",
   "description": "Homebridge plugin to control a Sony STR-DN1080 AV-receiver",
   "main": "src/index.js",
