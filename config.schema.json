@@ -105,6 +105,23 @@
                         }
                     }
                 }
+            },
+            "accessoryInformation": {
+                "title": "Accessory information",
+                "type": "object",
+                "required": false,
+                "properties": {
+                    "manufacturer": {
+                        "title": "Manufacturer",
+                        "type": "string",
+                        "required": false
+                    },
+                    "serialNumber": {
+                        "title": "Serial number",
+                        "type": "string",
+                        "required": false
+                    }
+                }
             }
         }
     },
@@ -154,6 +171,21 @@
                 },
                 {
                     "key": "soundFields[].value"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "title": "Accessory information",
+            "expandable": true,
+            "expanded": false,
+            "key": "accessoryInformation",
+            "items": [
+                {
+                    "key": "accessoryInformation.manufacturer"
+                },
+                {
+                    "key": "accessoryInformation.serialNumber"
                 }
             ]
         }
