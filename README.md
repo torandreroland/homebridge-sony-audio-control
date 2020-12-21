@@ -37,7 +37,7 @@ For every external input you want to enable, you have to add a new input object 
 
 For every soundfield you want to enable, you can add a new soundfield object with a "name" and "value". Again "name" can be set to what you prefer to refer to the soundfield as using Homekit or Siri, while "value" have to correspond with the soundField coding of the Sony equipment. If you omit the soundField array entirely, default soundfields for 2 channel stereo and Dolby Surroind will be created. If you don't want any soundfields to be created, included an empty array (ie. "soundFields": []).
 
-Default values 'Sony' and 'Serial number 1' for respectively manufacturer and serial number can be overridden by adding an object 'accessoryInformation' with fields 'manufacturer' and/or 'serialNumber'.
+Default values 'Sony', 'STR-DN1080' and 'Serial number 1' for respectively manufacturer, model and serial number can be overridden by adding an object 'accessoryInformation' with fields 'manufacturer', 'model' and/or 'serialNumber'.
 
     "accessories": [
         {
@@ -86,6 +86,7 @@ Default values 'Sony' and 'Serial number 1' for respectively manufacturer and se
             ],
             "accessoryInformation": {
                 "manufacturer": "Sony",
+                "model": "STR-DN1080",
                 "serialNumber": "SN1"
             },
         }

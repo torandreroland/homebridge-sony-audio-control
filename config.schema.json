@@ -116,6 +116,11 @@
                         "type": "string",
                         "required": false
                     },
+                    "model": {
+                        "title": "Model",
+                        "type": "string",
+                        "required": false
+                    },
                     "serialNumber": {
                         "title": "Serial number",
                         "type": "string",
@@ -183,6 +188,9 @@
             "items": [
                 {
                     "key": "accessoryInformation.manufacturer"
+                },
+                {
+                    "key": "accessoryInformation.model"
                 },
                 {
                     "key": "accessoryInformation.serialNumber"
