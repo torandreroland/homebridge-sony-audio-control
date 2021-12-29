@@ -121,4 +121,4 @@ class VolumeService {
   }
 }
 
-module.exports = VolumeService;
+export default VolumeService;

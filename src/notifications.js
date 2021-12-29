@@ -1,5 +1,5 @@
-const WebSocketClient = require('websocket').client;
-
+import pkg from 'websocket';
+const {client: WebSocketClient} = pkg;
 
 class Notifications {
   constructor(notificationParams, lib) {
@@ -177,4 +177,4 @@ class Notifications {
   }
 }
 
-module.exports = Notifications;
+export default Notifications;

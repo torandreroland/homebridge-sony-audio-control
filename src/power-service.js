@@ -37,4 +37,4 @@ class PowerService {
   }
 }
 
-module.exports = PowerService;
+export default PowerService;

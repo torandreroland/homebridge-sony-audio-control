@@ -1,5 +1,4 @@
-const fetch = require("node-fetch");
-
+import fetch from 'node-fetch';
 
 class API {
   constructor(ip, port, log, outputZone) {
@@ -64,4 +63,4 @@ class API {
 
 }
 
-module.exports = API;
+export default API;

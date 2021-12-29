@@ -100,4 +100,4 @@ class InputService {
 
 }
 
-module.exports = InputService;
+export default InputService;

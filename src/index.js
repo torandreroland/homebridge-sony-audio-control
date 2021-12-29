@@ -1,15 +1,15 @@
 "use strict";
 
-const API = require("./api");
-const PowerService = require('./power-service');
-const VolumeService = require('./volume-service');
-const InputService = require('./input-service');
-const SoundFieldService = require('./sound-field-service');
-const Notifications = require("./notifications");
+import API from './api.js';
+import PowerService from './power-service.js';
+import VolumeService from './volume-service.js';
+import InputService from './input-service.js';
+import SoundFieldService from './sound-field-service.js';
+import Notifications from './notifications.js'; 
 
 var Service, Characteristic;
 
-module.exports = function (homebridge) {
+export default function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory("homebridge-sony-audio-control", "receiver", SonyAudioControlReceiver);

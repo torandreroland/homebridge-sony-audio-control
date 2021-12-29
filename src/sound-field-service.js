@@ -110,4 +110,4 @@ class SoundFieldService {
   }
 }
 
-module.exports = SoundFieldService;
+export default SoundFieldService;
