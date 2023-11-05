@@ -26,6 +26,20 @@
                 "placeholder": 10000,
                 "description": "Port number of the device"
             },
+            "enableVolumeLightbulbService": {
+                "title": "Enable lightbulb volume service",
+                "type": "boolean",
+                "default": true,
+                "required": false,
+                "description": "Enable to allow adjusting volume using lightbulb service"
+            },
+            "enableVolumeFanService": {
+                "title": "Enable fan volume service",
+                "type": "boolean",
+                "default": true,
+                "required": false,
+                "description": "Enable to allow adjusting volume using fan service"
+            },
             "maxVolume": {
                 "title": "Max volume",
                 "type": "number",
@@ -139,6 +153,12 @@
         },
         {
             "key": "port"
+        },
+        {
+            "key": "enableVolumeLightbulbService"
+        },
+        {
+            "key": "enableVolumeFanService"
         },
         {
             "key": "maxVolume"

@@ -42,6 +42,8 @@ class SonyAudioControlReceiver {
     this.manufacturer = this.accessoryInformation.manufacturer || "Sony";
     this.model = this.accessoryInformation.model || "STR-DN1080";
     this.serialNumber = this.accessoryInformation.serialNumber || "Serial number 1";
+    this.enableVolumeLightbulbService = config.enableVolumeLightbulbService === false ? false : true;
+    this.enableVolumeFanService = config.enableVolumeFanService === true ? true : false;
     this.maxVolume = config.maxVolume || 100;
     this.enableNetworkStandby = config.enableNetworkStandby === false ? false : true;
 
@@ -54,6 +56,7 @@ class SonyAudioControlReceiver {
     this.services = {
       volumeLightbulbService: null,
       volumeFanService: null,
+      volumeServices: [],
       powerService: null,
       inputServices: [],
       soundFieldServices: []
@@ -62,6 +65,7 @@ class SonyAudioControlReceiver {
       informationService: null,
       volumeLightbulbService: null,
       volumeFanService: null,
+      volumeServices: [],
       powerService: null,
       inputServices: [],
       soundFieldServices: []
@@ -103,15 +107,23 @@ class SonyAudioControlReceiver {
       soundFieldServices: this.hapServices.soundFieldServices
     };
 
-    this.log("Creating volume lightbulb service!");
-    const volumeLightbulbService = new VolumeLightbulbService(serviceParams, this.maxVolume);
-    this.services.volumeLightbulbService = volumeLightbulbService;
-    this.hapServices.volumeLightbulbService = volumeLightbulbService.hapService;
+    if (this.enableVolumeLightbulbService) {
+      this.log("Creating volume lightbulb service!");
+      const volumeLightbulbService = new VolumeLightbulbService(serviceParams, this.maxVolume);
+      this.services.volumeLightbulbService = volumeLightbulbService;
+      this.hapServices.volumeLightbulbService = volumeLightbulbService.hapService;
+      this.services.volumeServices.push(volumeLightbulbService);
+      this.hapServices.volumeServices.push(volumeLightbulbService.hapService);
+    }
 
-    this.log("Creating volume fan service!");
-    const volumeFanService = new VolumeFanService(serviceParams, this.maxVolume);
-    this.services.volumeFanService = volumeFanService;
-    this.hapServices.volumeFanService = volumeFanService.hapService;
+    if (this.enableVolumeFanService) {
+      this.log("Creating volume fan service!");
+      const volumeFanService = new VolumeFanService(serviceParams, this.maxVolume);
+      this.services.volumeFanService = volumeFanService;
+      this.hapServices.volumeFanService = volumeFanService.hapService;
+      this.services.volumeServices.push(volumeFanService);
+      this.hapServices.volumeServices.push(volumeFanService.hapService);
+    }
 
     this.log("Creating power service!");
     const powerService = new PowerService(serviceParams);
@@ -158,9 +170,8 @@ class SonyAudioControlReceiver {
       this.notifications.push(new Notifications(notificationParams, lib));
     }
 
-//TODO return if present
-    return [this.services.informationService, this.hapServices.volumeLightbulbService, this.hapServices.volumeFanService, this.hapServices.powerService]
-      .concat(this.hapServices.inputServices, this.hapServices.soundFieldServices);
+    return [this.services.informationService, this.hapServices.powerService]
+      .concat(this.hapServices.volumeServices, this.hapServices.inputServices, this.hapServices.soundFieldServices);
   }
 
   async getModelName() {
