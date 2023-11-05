@@ -112,7 +112,8 @@ class Notifications {
     this.hapServices.powerService.getCharacteristic(this.Characteristic.On).updateValue(newPowerState);
     this.log("Updated power to " + newPowerState);
 
-    const affectedServices = this.hapServices.inputServices.concat(this.hapServices.soundFieldServices, this.hapServices.volumeService);
+    //TODO special handling of fan service with Active-characteristic
+    const affectedServices = this.hapServices.inputServices.concat(this.hapServices.soundFieldServices, this.hapServices.volumeLightbulbService);
     if (newPowerState) {
       this.log.debug("Waiting for device to turn on...");
       
@@ -171,8 +172,12 @@ class Notifications {
     
     const unmuteStatus = param.mute === "off";
     const volumeLevel = param.volume;
-    this.hapServices.volumeService.getCharacteristic(this.Characteristic.On).updateValue(unmuteStatus);
-    this.hapServices.volumeService.getCharacteristic(this.Characteristic.Brightness).updateValue(volumeLevel);
+
+    //TODO update if services exist
+    this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.On).updateValue(unmuteStatus);
+    this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.Brightness).updateValue(volumeLevel);
+    this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.Active).updateValue(unmuteStatus);
+    this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.RotationSpeed).updateValue(volumeLevel);
     this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
   }
 }

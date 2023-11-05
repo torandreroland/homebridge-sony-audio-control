@@ -1,4 +1,4 @@
-class VolumeService {
+class VolumeLightbulbService {
   constructor(serviceParams, maxVolume) {
     this.api = serviceParams.api;
     this.log = serviceParams.log;
@@ -121,4 +121,4 @@ class VolumeService {
   }
 }
 
-export default VolumeService;
+export default VolumeLightbulbService;

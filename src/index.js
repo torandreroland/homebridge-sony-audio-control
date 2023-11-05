@@ -2,7 +2,8 @@
 
 import API from './api.js';
 import PowerService from './power-service.js';
-import VolumeService from './volume-service.js';
+import VolumeLightbulbService from './volume-lightbulb-service.js';
+import VolumeFanService from './volume-fan-service.js';
 import InputService from './input-service.js';
 import SoundFieldService from './sound-field-service.js';
 import Notifications from './notifications.js'; 
@@ -51,14 +52,16 @@ class SonyAudioControlReceiver {
     };
 
     this.services = {
-      volumeService: null,
+      volumeLightbulbService: null,
+      volumeFanService: null,
       powerService: null,
       inputServices: [],
       soundFieldServices: []
     };
     this.hapServices = {
       informationService: null,
-      volumeService: null,
+      volumeLightbulbService: null,
+      volumeFanService: null,
       powerService: null,
       inputServices: [],
       soundFieldServices: []
@@ -100,10 +103,15 @@ class SonyAudioControlReceiver {
       soundFieldServices: this.hapServices.soundFieldServices
     };
 
-    this.log("Creating volume service!");
-    const volumeService = new VolumeService(serviceParams, this.maxVolume);
-    this.services.volumeService = volumeService;
-    this.hapServices.volumeService = volumeService.hapService;
+    this.log("Creating volume lightbulb service!");
+    const volumeLightbulbService = new VolumeLightbulbService(serviceParams, this.maxVolume);
+    this.services.volumeLightbulbService = volumeLightbulbService;
+    this.hapServices.volumeLightbulbService = volumeLightbulbService.hapService;
+
+    this.log("Creating volume fan service!");
+    const volumeFanService = new VolumeFanService(serviceParams, this.maxVolume);
+    this.services.volumeFanService = volumeFanService;
+    this.hapServices.volumeFanService = volumeFanService.hapService;
 
     this.log("Creating power service!");
     const powerService = new PowerService(serviceParams);
@@ -150,7 +158,8 @@ class SonyAudioControlReceiver {
       this.notifications.push(new Notifications(notificationParams, lib));
     }
 
-    return [this.services.informationService, this.hapServices.volumeService, this.hapServices.powerService]
+//TODO return if present
+    return [this.services.informationService, this.hapServices.volumeLightbulbService, this.hapServices.volumeFanService, this.hapServices.powerService]
       .concat(this.hapServices.inputServices, this.hapServices.soundFieldServices);
   }
 
