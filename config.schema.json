@@ -36,7 +36,7 @@
             "enableVolumeFanService": {
                 "title": "Enable fan volume service",
                 "type": "boolean",
-                "default": true,
+                "default": false,
                 "required": false,
                 "description": "Enable to allow adjusting volume using fan service"
             },

@@ -1,18 +1,15 @@
 class VolumeCharacteristics {
 
-    async getVolumeInformation() {
-        const response = await this.api.request("audio", "getVolumeInformation", [{ "output": this.outputZone }], "1.1");
-        return response[0];
-    }
-
     async getMuteState(callback) {
         this.log.debug("Getting state of mute!");
+
+        const volumeInformation = new VolumeInformation();
 
         try {
             this.log.debug("Deciding whether to request mute status from receiver based on power status!");
 
             if (await this.api.getPowerState()) {
-                const unmuteState = (await this.getVolumeInformation()).mute !== "on";
+                const unmuteState = (await volumeInformation.getVolumeInformation.bind(this)()).mute !== "on";
 
                 this.log.debug("Speaker is currently %s", unmuteState ? "not muted" : "muted");
 
@@ -70,8 +67,10 @@ class VolumeCharacteristics {
     async getVolume(callback) {
         this.log.debug("Getting state of volume!");
 
+        const volumeInformation = new VolumeInformation();
+
         try {
-            const info = await this.getVolumeInformation();
+            const info = await volumeInformation.getVolumeInformation.bind(this)();
             const volume = Math.round(info.volume / this.maxVolume * 100);
 
             this.log.debug("Speaker's volume is at %s %", volume);
@@ -100,6 +99,13 @@ class VolumeCharacteristics {
         }
     }
 
+}
+
+class VolumeInformation {
+    async getVolumeInformation() {
+        const response = await this.api.request("audio", "getVolumeInformation", [{ "output": this.outputZone }], "1.1");
+        return response[0];
+    }
 }
 
 export default VolumeCharacteristics;

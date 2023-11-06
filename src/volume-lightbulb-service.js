@@ -1,4 +1,4 @@
-import * as volumeCharacteristics from './volume-characteristics.js';
+import VolumeCharacteristics from './volume-characteristics.js';
 class VolumeLightbulbService {
   constructor(serviceParams, maxVolume) {
     this.api = serviceParams.api;
@@ -8,6 +8,8 @@ class VolumeLightbulbService {
     this.maxVolume = maxVolume;
 
     this.hapService = new serviceParams.Service.Lightbulb(`${serviceParams.accessoryName} Volume`);
+
+    const volumeCharacteristics = new VolumeCharacteristics();
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)

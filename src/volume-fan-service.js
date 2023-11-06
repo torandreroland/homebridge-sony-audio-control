@@ -1,4 +1,4 @@
-import * as volumeCharacteristics from './volume-characteristics.js';
+import VolumeCharacteristics from './volume-characteristics.js';
 class VolumeFanService {
     constructor(serviceParams, maxVolume) {
         this.api = serviceParams.api;
@@ -7,7 +7,9 @@ class VolumeFanService {
         this.lastChanges = serviceParams.lastChanges;
         this.maxVolume = maxVolume;
 
-        this.hapService = new serviceParams.Service.Fan2(`${serviceParams.accessoryName} Volume`);
+        this.hapService = new serviceParams.Service.Fan(`${serviceParams.accessoryName} Volume`);
+
+        const volumeCharacteristics = new VolumeCharacteristics();
 
         this.hapService
             .getCharacteristic(serviceParams.Characteristic.Active)

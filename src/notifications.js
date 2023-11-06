@@ -199,7 +199,7 @@ class Notifications {
       this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.RotationSpeed).updateValue(volumeLevel);
     }
 
-    if (this.hapService.volumeServices.length > 0) {
+    if (this.hapServices.volumeServices.length > 0) {
       this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
     }
   }
