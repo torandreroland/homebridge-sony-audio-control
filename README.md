@@ -21,9 +21,13 @@ Below is an example configuration that has to amended to your existing Homebridg
 
 You have to edit "ip" to correspond with the IP-address of your receiver.
 
-Set "port" in correspondance with the device. If you omit port, a default value of 10000 will be used. 
+Set "port" in correspondance with the device. If you omit port, a default value of 10000 will be used.
 
 Set "name" to what you prefer to refer to the device as using Homekit or Siri.
+
+Set "enableVolumeLightbulbService" to true/false to enable volume control by a lightbulb. If you omit enableVolumeLightbulbService, a default value of true will be used.
+
+Set "enableVolumeFanService" to true/false to enable volume control by a fan. If you omit enableVolumeFanService, a default value of false will be used.
 
 Set "maxVolume" in correspondance with max volume of the device. This is used to calculate the volume percentage. If you omit maxVolume, a default value of 100 will be used.
 
@@ -47,6 +51,8 @@ Default values 'Sony', 'STR-DN1080' and 'Serial number 1' for respectively manuf
             "maxVolume": 100,
             "port": 10000,
             "outputZone": "extOutput:zone?zone=1",
+            "enableVolumeLightbulbService": true,
+            "enableVolumeFanService": false,
             "enableNetworkStandby": true,
             "inputs": [
               {
