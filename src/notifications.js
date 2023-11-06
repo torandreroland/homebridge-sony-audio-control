@@ -112,20 +112,37 @@ class Notifications {
     this.hapServices.powerService.getCharacteristic(this.Characteristic.On).updateValue(newPowerState);
     this.log("Updated power to " + newPowerState);
 
-    const affectedServices = this.hapServices.inputServices.concat(this.hapServices.soundFieldServices, this.hapServices.volumeService);
+    let affectedCharacteristics = new Map();
+
+    for (const service of this.hapServices.inputServices) {
+      affectedCharacteristics.set(service.getCharacteristic(this.Characteristic.On), service);
+    }
+    
+    for (const service of this.hapServices.soundFieldServices) {
+      affectedCharacteristics.set(service.getCharacteristic(this.Characteristic.On), service);
+    }
+    
+    if (this.hapServices.volumeLightbulbService !== null) {
+      affectedCharacteristics.set(this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.On), this.hapServices.volumeLightbulbService);
+    }
+    
+    if (this.hapServices.volumeFanService !== null) {
+      affectedCharacteristics.set(this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.Active), this.hapServices.volumeFanService);
+    }    
+
     if (newPowerState) {
       this.log.debug("Waiting for device to turn on...");
       
       setTimeout(() => {
-        for (const service of affectedServices) {
+        for (let [characteristic, service] of affectedCharacteristics.entries()) {
           this.log.debug("Getting state of %s when turning on the device", this.getServiceName(service));
-          service.getCharacteristic(this.Characteristic.On).getValue();
+          characteristic.getValue();
         }
       }, 1000);
     } else {
-      for (const service of affectedServices) {
+      for (let [characteristic, service] of affectedCharacteristics.entries()) {
         this.log.debug("Also turning off %s when turning off the device", this.getServiceName(service));
-        service.getCharacteristic(this.Characteristic.On).updateValue(false);
+        characteristic.updateValue(false);
       }
     }
   }
@@ -171,9 +188,20 @@ class Notifications {
     
     const unmuteStatus = param.mute === "off";
     const volumeLevel = param.volume;
-    this.hapServices.volumeService.getCharacteristic(this.Characteristic.On).updateValue(unmuteStatus);
-    this.hapServices.volumeService.getCharacteristic(this.Characteristic.Brightness).updateValue(volumeLevel);
-    this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
+
+    if (this.hapServices.volumeLightbulbService !== null) {
+      this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.On).updateValue(unmuteStatus);
+      this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.Brightness).updateValue(volumeLevel);
+    }
+
+    if (this.hapServices.volumeFanService !== null) {
+      this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.Active).updateValue(unmuteStatus);
+      this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.RotationSpeed).updateValue(volumeLevel);
+    }
+
+    if (this.hapServices.volumeServices.length > 0) {
+      this.log("Updated volume to %s and mute status to %s", volumeLevel, !unmuteStatus);
+    }
   }
 }
 
