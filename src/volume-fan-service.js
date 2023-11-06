@@ -7,7 +7,7 @@ class VolumeFanService {
         this.lastChanges = serviceParams.lastChanges;
         this.maxVolume = maxVolume;
 
-        this.hapService = new serviceParams.Service.Fan(`${serviceParams.accessoryName} Volume`);
+        this.hapService = new serviceParams.Service.Fanv2(`${serviceParams.accessoryName} Volume`);
 
         const volumeCharacteristics = new VolumeCharacteristics();
 
