@@ -4,7 +4,7 @@ With this plugin you can create HomeKit services to control a Sony STR-DN1080 Au
 The code for this plugin has originally been forked from [Http Speaker for Homebridge](https://github.com/Supereg/homebridge-http-speaker) authored by Andreas Bauer.
 
 ## Compatibility notice
-This plugin utilizes Sony's [Audio Control API](https://developer.sony.com/develop/audio-control-api/). It has only been tested with a Sony STR-DN1080 Audio Video Receiver, but it may work with other Sony devices that support the API.
+This plugin utilizes Sony's [Audio Control API](https://developer.sony.com/audio-control-api). It has only been tested with a Sony STR-DN1080 Audio Video Receiver, but it may work with other Sony devices that support the API.
 
 The plugin supports powertoggling, volume control including muting, setting sound modes stereo and Dolby Surround and switching configured external inputs.
 
@@ -37,7 +37,7 @@ Set "outputZone" to the zone you want to control (omit if your device does not s
 
 To disable network standby, set enableNetworkStandby to false (not recommended as you can't turn on receiver again through a network connection, but it significantly lowers power consumption while off).
 
-For every external input you want to enable, you have to add a new input object with a "name" and "uri". Again "name" can be set to what you prefer to refer to the input as using Homekit or Siri, while "uri" have to correspond to the Device Resource URI per [Device URI](https://developer.sony.com/develop/audio-control-api/api-references/device-uri).
+For every external input you want to enable, you have to add a new input object with a "name" and "uri". Again "name" can be set to what you prefer to refer to the input as using Homekit or Siri, while "uri" have to correspond to the Device Resource URI per [Device URI](https://developer.sony.com/audio-control-api/guides-and-examples/how-to-use-the-device-resource-uri/).
 
 For every soundfield you want to enable, you can add a new soundfield object with a "name" and "value". Again "name" can be set to what you prefer to refer to the soundfield as using Homekit or Siri, while "value" have to correspond with the soundField coding of the Sony equipment. If you omit the soundField array entirely, default soundfields for 2 channel stereo and Dolby Surroind will be created. If you don't want any soundfields to be created, included an empty array (ie. "soundFields": []).
 
