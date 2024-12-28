@@ -136,7 +136,7 @@ class Notifications {
       setTimeout(() => {
         for (let [characteristic, service] of affectedCharacteristics.entries()) {
           this.log.debug("Getting state of %s when turning on the device", this.getServiceName(service));
-          characteristic.getValue();
+          characteristic.value;
         }
       }, 1000);
     } else {
@@ -170,7 +170,7 @@ class Notifications {
     }
     for (const service of this.hapServices.soundFieldServices) {
       this.log.debug("Getting state of soundfield %s when switching to %s", this.getServiceName(service), inputService.name);
-      service.getCharacteristic(this.Characteristic.On).getValue();
+      service.getCharacteristic(this.Characteristic.On).value;
     }
   }
 

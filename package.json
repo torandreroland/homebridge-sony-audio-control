@@ -10,7 +10,7 @@
   ],
   "engines": {
     "node": ">=12.20.0",
-    "homebridge": ">=0.2.0"
+    "homebridge": ">=0.2.0 || ^2.0.0-beta.0"
   },
   "author": {
     "name": "Andi, Tor André Roland and Maxi Herczegh"
