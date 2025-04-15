@@ -75,10 +75,9 @@ class API {
       }
     }
   
-    return {
-      getCurrentExternalTerminalsStatus: currentExternalTerminalsVersion,
-      getSystemInformation: systemInformationVersion
-    };
+    this.externalTerminalsVersion = currentExternalTerminalsVersion;
+    this.systemInformationVersion = systemInformationVersion;
+    this.log.debug("Set API versions: externalTerminalsVersion=%s, systemInformationVersion=%s", this.externalTerminalsVersion, this.systemInformationVersion);
   }
 
   sleep(ms = 1000) {

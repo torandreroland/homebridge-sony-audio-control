@@ -38,7 +38,7 @@ class SonyAudioControlReceiver {
     this.ip = config.ip;
     this.port = config.port || 10000;
     this.api = new API(this.ip, this.port, log, outputZone);
-    this.setApiVersions();
+    this.api.getApiVersions();
     this.accessoryInformation = config.accessoryInformation || {};
     this.manufacturer = this.accessoryInformation.manufacturer || "Sony";
     this.model = this.accessoryInformation.model || "STR-DN1080";
@@ -183,17 +183,6 @@ class SonyAudioControlReceiver {
       return interfaceResponse.modelName
     } catch (error) {
       this.log.error("getInterfaceInformation() failed: %s", error.message);
-    }
-  }
-
-  async setApiVersions() {
-    try {
-      const apiVersions = await this.api.getApiVersions();
-      this.externalTerminalsVersion = apiVersions.getCurrentExternalTerminalsStatus || null;
-      this.systemInformationVersion = apiVersions.getSystemInformation || null;
-      this.log.debug("Set API versions: externalTerminalsVersion=%s, systemInformationVersion=%s", this.externalTerminalsVersion, this.systemInformationVersion);
-    } catch (error) {
-      this.log.error("getApiVersions() failed: %s", error.message);
     }
   }
 
