@@ -38,15 +38,16 @@ class SoundFieldService {
         const response = await this.api.request("audio", "getSoundSettings", [{ "target": "soundField" }], "1.1");
         const soundFieldState = response[0].currentValue === this.value;
 
-        this.log.debug("SoundField is currently %s", soundFieldState ? "on" : "off");
-        callback(null, soundFieldState);
+        this.log.debug("SoundField %s is currently %s", this.name, soundFieldState ? "on" : "off");
+        this.hapService.getCharacteristic(this.Characteristic.On).updateValue(soundFieldState);
+        callback ? callback(null, soundFieldState) : soundFieldState;
       } else {
         this.log.debug("Reporting state of soundField as off since receiver is off!");
-        callback(null, false);
+        callback ? callback(null, false) : false;
       }
     } catch (error) {
       this.log.error("getSoundFieldState() failed: %s", error.message);
-      callback(error);
+      callback ? callback(error) : error;
     }
   }
 
