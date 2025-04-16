@@ -16,10 +16,10 @@ class PowerService {
       const powerState = await this.api.getPowerState();
 
       this.log.debug("Speaker is currently %s", powerState ? "on" : "off");
-      callback ? callback(null, powerState) : powerState;
+      typeof callback === "function" ? callback(null, powerState) : powerState;
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 
@@ -28,10 +28,10 @@ class PowerService {
       await this.api.setPowerState(newPowerState);
 
       this.log.debug("Set power to %s", newPowerState ? "on" : "off");
-      callback ? callback(null) : null;
+      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setPowerState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 }

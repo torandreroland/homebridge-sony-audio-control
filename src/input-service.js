@@ -24,7 +24,7 @@ class InputService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
       return;
     }
 
@@ -36,14 +36,14 @@ class InputService {
         const inputState = response[0].uri === this.uri;
 
         this.log.debug("Input is currently %s", inputState ? "on" : "off");
-        callback ? callback(null, inputState) : inputState;
+        typeof callback === "function" ? callback(null, inputState) : inputState;
       } else {
         this.log.debug("Reporting state of input as off since receiver is off!");
-        callback ? callback(null, false) : false;
+        typeof callback === "function" ? callback(null, false) : false;
       }
     } catch (error) {
       this.log.error("getInputState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
 
   }
@@ -57,7 +57,7 @@ class InputService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
       return;
     }
 
@@ -68,7 +68,7 @@ class InputService {
         await this.api.setPowerState(true);
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        callback ? callback(error) : error;
+        typeof callback === "function" ? callback(error) : error;
         return;
       }
 
@@ -91,10 +91,10 @@ class InputService {
         this.log.debug("Set input %s to off", this.name);
       }
 
-      callback ? callback(null) : null;
+      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setInputState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 

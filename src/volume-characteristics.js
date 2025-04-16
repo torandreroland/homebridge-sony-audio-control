@@ -12,14 +12,14 @@ class VolumeCharacteristics {
 
         this.log.debug("Speaker is currently %s", unmuteState ? "not muted" : "muted");
 
-        callback ? callback(null, unmuteState) : unmuteState;
+        typeof callback === "function" ? callback(null, unmuteState) : unmuteState;
       } else {
         this.log.debug("Reporting muted since since receiver is off!");
-        callback ? callback(null, false) : false;
+        typeof callback === "function" ? callback(null, false) : false;
       }
     } catch (error) {
       this.log.error("getMuteState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 
@@ -32,7 +32,7 @@ class VolumeCharacteristics {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
       return;
     }
 
@@ -41,10 +41,10 @@ class VolumeCharacteristics {
       try {
         this.log("Set power state to on");
         await this.api.setPowerState(true);
-        callback ? callback(null) : null;
+        typeof callback === "function" ? callback(null) : null;
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        callback ? callback(error) : error;
+        typeof callback === "function" ? callback(error) : error;
       }
     } else {
       try {
@@ -54,10 +54,10 @@ class VolumeCharacteristics {
         }], "1.1");
 
         this.log("Set mute to %s", newUnmuteState ? "off" : "on");
-        callback ? callback(null) : null;
+        typeof callback === "function" ? callback(null) : null;
       } catch (error) {
         this.log.error("setMuteState() failed: %s", error.message);
-        callback ? callback(error) : error;
+        typeof callback === "function" ? callback(error) : error;
       }
     }
   }
@@ -72,10 +72,10 @@ class VolumeCharacteristics {
       const volume = Math.round(info.volume / this.maxVolume * 100);
 
       this.log.debug("Speaker's volume is at %s %", volume);
-      callback ? callback(null, volume) : volume;
+      typeof callback === "function" ? callback(null, volume) : volume;
     } catch (error) {
       this.log.error("getVolume() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 
@@ -90,10 +90,10 @@ class VolumeCharacteristics {
       }], "1.1");
 
       this.log("Set volume to %s", volume);
-      callback ? callback(null) : null;
+      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setVolume() failed: %s", error.message);
-      callback ? callback(error) : error;
+      typeof callback === "function" ? callback(error) : error;
     }
   }
 }

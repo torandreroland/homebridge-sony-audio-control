@@ -82,7 +82,7 @@ class SonyAudioControlReceiver {
 
   identify(callback) {
     this.log("Identify requested!");
-    callback ? callback() : null;
+    typeof callback === "function" ? callback() : null;
   }
 
   getServices() {
