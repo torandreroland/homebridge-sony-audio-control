@@ -6,7 +6,7 @@ import VolumeLightbulbService from './volume-lightbulb-service.js';
 import VolumeFanService from './volume-fan-service.js';
 import InputService from './input-service.js';
 import SoundFieldService from './sound-field-service.js';
-import Notifications from './notifications.js'; 
+import Notifications from './notifications.js';
 
 var Service, Characteristic;
 
@@ -16,9 +16,7 @@ export default function (homebridge) {
   homebridge.registerAccessory("homebridge-sony-audio-control", "receiver", SonyAudioControlReceiver);
 };
 
-
 class SonyAudioControlReceiver {
-
   constructor(log, config) {
     var outputZone = (config.outputZone === undefined) ? "" : config.outputZone;
 
@@ -26,7 +24,8 @@ class SonyAudioControlReceiver {
     this.name = config.name;
     this.outputZone = outputZone;
     this.inputs = config.inputs || [];
-    this.soundFields = config.soundFields || [{
+    this.soundFields = config.soundFields || [
+      {
         "name": "Surround Mode",
         "value": "dolbySurround"
       },
@@ -35,14 +34,17 @@ class SonyAudioControlReceiver {
         "value": "2chStereo"
       }
     ];
+
     this.ip = config.ip;
     this.port = config.port || 10000;
     this.api = new API(this.ip, this.port, log, outputZone);
     this.api.getApiVersions();
+
     this.accessoryInformation = config.accessoryInformation || {};
     this.manufacturer = this.accessoryInformation.manufacturer || "Sony";
     this.model = this.accessoryInformation.model || "STR-DN1080";
     this.serialNumber = this.accessoryInformation.serialNumber || "Serial number 1";
+
     this.enableVolumeLightbulbService = config.enableVolumeLightbulbService === false ? false : true;
     this.enableVolumeFanService = config.enableVolumeFanService === true ? true : false;
     this.maxVolume = config.maxVolume || 100;
@@ -62,7 +64,7 @@ class SonyAudioControlReceiver {
       inputServices: [],
       soundFieldServices: []
     };
-    
+
     this.hapServices = {
       informationService: null,
       volumeLightbulbService: null,
@@ -80,7 +82,7 @@ class SonyAudioControlReceiver {
 
   identify(callback) {
     this.log("Identify requested!");
-    callback();
+    callback ? callback() : null;
   }
 
   getServices() {
@@ -94,7 +96,13 @@ class SonyAudioControlReceiver {
       .setCharacteristic(Characteristic.Model, this.model)
       .setCharacteristic(Characteristic.SerialNumber, this.serialNumber);
 
-    this.log.debug("Added information service with manufacturer '%s', model '%s' and serial number '%s'", informationService.getCharacteristic(Characteristic.Manufacturer).value, informationService.getCharacteristic(Characteristic.Model).value, informationService.getCharacteristic(Characteristic.SerialNumber).value)
+    this.log.debug(
+      "Added information service with manufacturer '%s', model '%s' and serial number '%s'",
+      informationService.getCharacteristic(Characteristic.Manufacturer).value,
+      informationService.getCharacteristic(Characteristic.Model).value,
+      informationService.getCharacteristic(Characteristic.SerialNumber).value
+    );
+
     this.services.informationService = informationService;
 
     const serviceParams = {
@@ -131,20 +139,14 @@ class SonyAudioControlReceiver {
     this.services.powerService = powerService;
     this.hapServices.powerService = powerService.hapService;
 
-    for (const {
-        name,
-        uri
-      } of this.inputs) {
+    for (const { name, uri } of this.inputs) {
       this.log("Creating input service %s!", name);
       const inputService = new InputService(serviceParams, name, uri);
       this.services.inputServices.push(inputService);
       this.hapServices.inputServices.push(inputService.hapService);
     }
 
-    for (const {
-        name,
-        value
-      } of this.soundFields) {
+    for (const { name, value } of this.soundFields) {
       this.log("Creating soundfield service %s!", name);
       const soundFieldService = new SoundFieldService(serviceParams, name, value);
       this.services.soundFieldServices.push(soundFieldService);
@@ -180,7 +182,7 @@ class SonyAudioControlReceiver {
       const interfaceResponse = await this.api.request("system", "getInterfaceInformation", [], "1.0");
 
       this.log.debug("Model name is %s", interfaceResponse.modelName);
-      return interfaceResponse.modelName
+      return interfaceResponse.modelName;
     } catch (error) {
       this.log.error("getInterfaceInformation() failed: %s", error.message);
     }
@@ -200,5 +202,4 @@ class SonyAudioControlReceiver {
       this.log.error("setNetworkStandby() failed: %s", error.message);
     }
   }
-
 }

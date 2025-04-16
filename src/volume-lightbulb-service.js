@@ -1,4 +1,5 @@
 import VolumeCharacteristics from './volume-characteristics.js';
+
 class VolumeLightbulbService {
   constructor(serviceParams, maxVolume) {
     this.api = serviceParams.api;

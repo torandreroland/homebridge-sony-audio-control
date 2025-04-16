@@ -6,7 +6,6 @@ class SoundFieldService {
     this.soundFieldServices = serviceParams.soundFieldServices;
     this.Characteristic = serviceParams.Characteristic;
 
-
     this.name = soundFieldName;
     this.value = soundFieldValue;
 
@@ -27,7 +26,7 @@ class SoundFieldService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback(error);
+      callback ? callback(error) : error;
       return;
     }
 
@@ -60,7 +59,7 @@ class SoundFieldService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      callback(error);
+      callback ? callback(error) : error;
       return;
     }
 
@@ -71,7 +70,7 @@ class SoundFieldService {
         await this.api.setPowerState(true);
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        callback(error);
+        callback ? callback(error) : error;
         return;
       }
 
@@ -92,7 +91,7 @@ class SoundFieldService {
         this.log("Set soundField %s to on", this.name);
 
         for (const soundFieldService of this.soundFieldServices) {
-          if (soundFieldService === this.hapService ) continue;
+          if (soundFieldService === this.hapService) continue;
           this.log.debug("Also turning off %s when switching soundfield", soundFieldService.getCharacteristic(this.Characteristic.Name).value);
           soundFieldService.getCharacteristic(this.Characteristic.On).updateValue(false);
         }
@@ -102,12 +101,11 @@ class SoundFieldService {
         this.log.debug("Set soundField %s to off", this.name);
       }
 
-      callback(null);
+      callback ? callback(null) : null;
     } catch (error) {
       this.log.error("setSoundFieldState() failed: %s", error.message);
-      callback(error);
+      callback ? callback(error) : error;
     }
-
   }
 }
 

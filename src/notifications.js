@@ -1,5 +1,5 @@
 import pkg from 'websocket';
-const {client: WebSocketClient} = pkg;
+const { client: WebSocketClient } = pkg;
 
 class Notifications {
   constructor(notificationParams, lib) {
@@ -20,14 +20,13 @@ class Notifications {
       "notifyVolumeInformation": this.notifyVolumeInformation.bind(this)
     };
 
-    this.client = new WebSocketClient({keepalive: true, keepaliveInterval: this.pollingInterval}); 
+    this.client = new WebSocketClient({ keepalive: true, keepaliveInterval: this.pollingInterval });
 
     this.client.on('connectFailed', error => {
       this.log('Connect Error: ' + error.toString());
     });
 
     this.client.on('connect', connection => {
-
       this.log('WebSocket client connected on endpoint %s', this.url);
 
       this.connection = connection;
@@ -53,6 +52,7 @@ class Notifications {
 
         this.log.debug("Got notification from receiver using WebSocket");
         let msg = JSON.parse(message.utf8Data);
+
         if (msg.id == 1) {
           let allNotifications = msg.result[0].disabled.concat(msg.result[0].enabled);
           let enable = [];
@@ -65,8 +65,8 @@ class Notifications {
               disable.push(notification);
             }
           }
-          
-          // the empty check is required because [] apparently means "every notification" and disable takes precedence
+
+          // The empty check is required because [] apparently means "every notification" and disable takes precedence
           // so the "audio" endpoint with only one available notification would not work without it
           this.switchNotifications(127, disable.length == 0 ? null : disable, enable.length == 0 ? null : enable);
         } else {
@@ -77,7 +77,6 @@ class Notifications {
           handler(msg);
         }
       });
-
     });
 
     this.client.connect(this.url);
@@ -103,6 +102,7 @@ class Notifications {
 
   notifyExternalTerminalStatus(msg) {
     const extTerminal = this.outputZone ? msg.params.find(param => param.uri === this.outputZone) : msg.params[0];
+
     if (extTerminal == null) {
       this.log.debug("No notifyExternalTerminalStatus parameter matches the configured output zone!");
       return;
@@ -117,22 +117,22 @@ class Notifications {
     for (const service of this.hapServices.inputServices) {
       affectedCharacteristics.set(service.getCharacteristic(this.Characteristic.On), service);
     }
-    
+
     for (const service of this.hapServices.soundFieldServices) {
       affectedCharacteristics.set(service.getCharacteristic(this.Characteristic.On), service);
     }
-    
+
     if (this.hapServices.volumeLightbulbService !== null) {
       affectedCharacteristics.set(this.hapServices.volumeLightbulbService.getCharacteristic(this.Characteristic.On), this.hapServices.volumeLightbulbService);
     }
-    
+
     if (this.hapServices.volumeFanService !== null) {
       affectedCharacteristics.set(this.hapServices.volumeFanService.getCharacteristic(this.Characteristic.Active), this.hapServices.volumeFanService);
-    }    
+    }
 
     if (newPowerState) {
       this.log.debug("Waiting for device to turn on...");
-      
+
       setTimeout(() => {
         for (let [characteristic, service] of affectedCharacteristics.entries()) {
           this.log.debug("Getting state of %s when turning on the device", this.getServiceName(service));
@@ -149,12 +149,14 @@ class Notifications {
 
   notifyPlayingContentInfo(msg) {
     const param = this.outputZone ? msg.params.find(param => param.output === this.outputZone) : msg.params[0];
+
     if (param == null) {
       this.log.debug("No notifyPlayingContentInfo parameter matches the configured output zone!");
       return;
     }
-    
+
     const inputService = this.services.inputServices.find(service => service.uri === param.uri);
+
     if (inputService == null) {
       this.log.debug("Skipped unknown input update notification: %s", param.uri);
       return;
@@ -165,9 +167,11 @@ class Notifications {
 
     for (const service of this.hapServices.inputServices) {
       if (service === inputService.hapService) continue;
+
       this.log.debug("Also turning off %s when switching to %s", this.getServiceName(service), inputService.name);
       service.getCharacteristic(this.Characteristic.On).updateValue(false);
     }
+
     for (const service of this.hapServices.soundFieldServices) {
       this.log.debug("Getting state of soundfield %s when switching to %s", this.getServiceName(service), inputService.name);
       service.getCharacteristic(this.Characteristic.On).emit("get");
@@ -181,11 +185,12 @@ class Notifications {
     }
 
     const param = this.outputZone ? msg.params.find(param => param.output === this.outputZone) : msg.params[0];
+
     if (param == null) {
       this.log.debug("No notifyVolumeInformation parameter matches the configured output zone!");
       return;
     }
-    
+
     const unmuteStatus = param.mute === "off";
     const volumeLevel = param.volume;
 
