@@ -14,13 +14,13 @@ class VolumeLightbulbService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .on("get", volumeCharacteristics.getMuteState.bind(this))
-      .on("set", volumeCharacteristics.setMuteState.bind(this));
+      .onGet(volumeCharacteristics.getMuteState.bind(this))
+      .onSet(volumeCharacteristics.setMuteState.bind(this));
 
     this.hapService
       .addCharacteristic(new serviceParams.Characteristic.Brightness())
-      .on("get", volumeCharacteristics.getVolume.bind(this))
-      .on("set", volumeCharacteristics.setVolume.bind(this));
+      .onGet(volumeCharacteristics.getVolume.bind(this))
+      .onSet(volumeCharacteristics.setVolume.bind(this));
   }
 }
 

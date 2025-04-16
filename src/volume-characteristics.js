@@ -1,5 +1,5 @@
 class VolumeCharacteristics {
-  async getMuteState(callback) {
+  async getMuteState() {
     this.log.debug("Getting state of mute!");
 
     const volumeInformation = new VolumeInformation();
@@ -12,18 +12,18 @@ class VolumeCharacteristics {
 
         this.log.debug("Speaker is currently %s", unmuteState ? "not muted" : "muted");
 
-        typeof callback === "function" ? callback(null, unmuteState) : unmuteState;
+        return unmuteState;
       } else {
-        this.log.debug("Reporting muted since since receiver is off!");
-        typeof callback === "function" ? callback(null, false) : false;
+        this.log.debug("Reporting muted since receiver is off!");
+        return false;
       }
     } catch (error) {
       this.log.error("getMuteState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 
-  async setMuteState(newUnmuteState, callback) {
+  async setMuteState(newUnmuteState) {
     this.log.debug("Setting state of mute!");
 
     let powerState;
@@ -32,8 +32,7 @@ class VolumeCharacteristics {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
-      return;
+      throw error;
     }
 
     if (newUnmuteState && !powerState) {
@@ -41,10 +40,9 @@ class VolumeCharacteristics {
       try {
         this.log("Set power state to on");
         await this.api.setPowerState(true);
-        typeof callback === "function" ? callback(null) : null;
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        typeof callback === "function" ? callback(error) : error;
+        throw error;
       }
     } else {
       try {
@@ -54,15 +52,14 @@ class VolumeCharacteristics {
         }], "1.1");
 
         this.log("Set mute to %s", newUnmuteState ? "off" : "on");
-        typeof callback === "function" ? callback(null) : null;
       } catch (error) {
         this.log.error("setMuteState() failed: %s", error.message);
-        typeof callback === "function" ? callback(error) : error;
+        throw error;
       }
     }
   }
 
-  async getVolume(callback) {
+  async getVolume() {
     this.log.debug("Getting state of volume!");
 
     const volumeInformation = new VolumeInformation();
@@ -72,14 +69,14 @@ class VolumeCharacteristics {
       const volume = Math.round(info.volume / this.maxVolume * 100);
 
       this.log.debug("Speaker's volume is at %s %", volume);
-      typeof callback === "function" ? callback(null, volume) : volume;
+      return volume;
     } catch (error) {
       this.log.error("getVolume() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 
-  async setVolume(newVolumeState, callback) {
+  async setVolume(newVolumeState) {
     try {
       this.lastChanges.volume = Date.now();
 
@@ -90,10 +87,9 @@ class VolumeCharacteristics {
       }], "1.1");
 
       this.log("Set volume to %s", volume);
-      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setVolume() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 }

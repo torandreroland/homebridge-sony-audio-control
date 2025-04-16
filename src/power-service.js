@@ -7,31 +7,30 @@ class PowerService {
     this.hapService = new serviceParams.Service.Switch(serviceParams.accessoryName, serviceParams.accessoryName);
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .on("get", this.getPowerState.bind(this))
-      .on("set", this.setPowerState.bind(this));
+      .onGet(this.getPowerState.bind(this))
+      .onSet(this.setPowerState.bind(this));
   }
 
-  async getPowerState(callback) {
+  async getPowerState() {
     try {
       const powerState = await this.api.getPowerState();
 
       this.log.debug("Speaker is currently %s", powerState ? "on" : "off");
-      typeof callback === "function" ? callback(null, powerState) : powerState;
+      return powerState;
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 
-  async setPowerState(newPowerState, callback) {
+  async setPowerState(newPowerState) {
     try {
       await this.api.setPowerState(newPowerState);
 
       this.log.debug("Set power to %s", newPowerState ? "on" : "off");
-      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 }

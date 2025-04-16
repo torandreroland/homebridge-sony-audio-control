@@ -11,11 +11,11 @@ class InputService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .on("get", this.getInputState.bind(this))
-      .on("set", this.setInputState.bind(this));
+      .onGet(this.getInputState.bind(this))
+      .onSet(this.setInputState.bind(this));
   }
 
-  async getInputState(callback) {
+  async getInputState() {
     this.log.debug("Getting state of input!");
 
     let powerState;
@@ -24,8 +24,7 @@ class InputService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
-      return;
+      throw error;
     }
 
     try {
@@ -36,19 +35,18 @@ class InputService {
         const inputState = response[0].uri === this.uri;
 
         this.log.debug("Input is currently %s", inputState ? "on" : "off");
-        typeof callback === "function" ? callback(null, inputState) : inputState;
+        return inputState;
       } else {
         this.log.debug("Reporting state of input as off since receiver is off!");
-        typeof callback === "function" ? callback(null, false) : false;
+        return false;
       }
     } catch (error) {
       this.log.error("getInputState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
-
   }
 
-  async setInputState(newInputState, callback) {
+  async setInputState(newInputState) {
     this.log.debug("Setting state of input!");
 
     let powerState;
@@ -57,8 +55,7 @@ class InputService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
-      return;
+      throw error;
     }
 
     if (newInputState && !powerState) {
@@ -68,8 +65,7 @@ class InputService {
         await this.api.setPowerState(true);
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        typeof callback === "function" ? callback(error) : error;
-        return;
+        throw error;
       }
 
       this.log("Set power to on");
@@ -90,14 +86,11 @@ class InputService {
 
         this.log.debug("Set input %s to off", this.name);
       }
-
-      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setInputState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
-
 }
 
 export default InputService;

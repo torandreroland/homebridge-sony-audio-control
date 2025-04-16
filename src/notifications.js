@@ -174,7 +174,7 @@ class Notifications {
 
     for (const service of this.hapServices.soundFieldServices) {
       this.log.debug("Getting state of soundfield %s when switching to %s", this.getServiceName(service), inputService.name);
-      service.getCharacteristic(this.Characteristic.On).emit("get");
+      service.getCharacteristic(this.Characteristic.On).handleGetRequest();
     }
   }
 

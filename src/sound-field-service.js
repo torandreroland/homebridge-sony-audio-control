@@ -13,11 +13,11 @@ class SoundFieldService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .on("get", this.getSoundFieldState.bind(this))
-      .on("set", this.setSoundFieldState.bind(this));
+      .onGet(this.getSoundFieldState.bind(this))
+      .onSet(this.setSoundFieldState.bind(this));
   }
 
-  async getSoundFieldState(callback) {
+  async getSoundFieldState() {
     this.log.debug("Getting state of soundField!");
 
     let powerState;
@@ -26,8 +26,7 @@ class SoundFieldService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
-      return;
+      throw error;
     }
 
     try {
@@ -38,19 +37,18 @@ class SoundFieldService {
         const soundFieldState = response[0].currentValue === this.value;
 
         this.log.debug("SoundField %s is currently %s", this.name, soundFieldState ? "on" : "off");
-        this.hapService.getCharacteristic(this.Characteristic.On).updateValue(soundFieldState);
-        typeof callback === "function" ? callback(null, soundFieldState) : soundFieldState;
+        return soundFieldState;
       } else {
         this.log.debug("Reporting state of soundField as off since receiver is off!");
-        typeof callback === "function" ? callback(null, false) : false;
+        return false;
       }
     } catch (error) {
       this.log.error("getSoundFieldState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 
-  async setSoundFieldState(newSoundFieldState, callback) {
+  async setSoundFieldState(newSoundFieldState) {
     this.log.debug("Setting state of soundField!");
 
     let powerState;
@@ -59,8 +57,7 @@ class SoundFieldService {
       powerState = await this.api.getPowerState();
     } catch (error) {
       this.log.error("getPowerState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
-      return;
+      throw error;
     }
 
     if (newSoundFieldState && !powerState) {
@@ -70,8 +67,7 @@ class SoundFieldService {
         await this.api.setPowerState(true);
       } catch (error) {
         this.log.error("setPowerState() failed: %s", error.message);
-        typeof callback === "function" ? callback(error) : error;
-        return;
+        throw error;
       }
 
       this.log("Set power to on");
@@ -100,11 +96,9 @@ class SoundFieldService {
 
         this.log.debug("Set soundField %s to off", this.name);
       }
-
-      typeof callback === "function" ? callback(null) : null;
     } catch (error) {
       this.log.error("setSoundFieldState() failed: %s", error.message);
-      typeof callback === "function" ? callback(error) : error;
+      throw error;
     }
   }
 }
