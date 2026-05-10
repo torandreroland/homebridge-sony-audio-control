@@ -14,7 +14,7 @@ export default function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory("homebridge-sony-audio-control", "receiver", SonyAudioControlReceiver);
-};
+}
 
 class SonyAudioControlReceiver {
   constructor(log, config) {

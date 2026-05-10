@@ -9,7 +9,7 @@ class SoundFieldService {
     this.name = soundFieldName;
     this.value = soundFieldValue;
 
-    this.hapService = new serviceParams.Service.Switch(soundFieldName, soundFieldName);
+    this.hapService = new serviceParams.Service.Switch(soundFieldName, soundFieldValue);
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)

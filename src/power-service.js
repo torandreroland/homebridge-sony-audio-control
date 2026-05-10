@@ -5,6 +5,7 @@ class PowerService {
     this.outputZone = serviceParams.outputZone;
 
     this.hapService = new serviceParams.Service.Switch(serviceParams.accessoryName, serviceParams.accessoryName);
+
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
       .onGet(this.getPowerState.bind(this))

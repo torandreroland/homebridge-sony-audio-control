@@ -7,7 +7,7 @@ class InputService {
     this.name = inputName;
     this.uri = inputURI;
 
-    this.hapService = new serviceParams.Service.Switch(inputName, inputName);
+    this.hapService = new serviceParams.Service.Switch(inputName, inputURI);
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
